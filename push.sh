@@ -22,9 +22,11 @@ if [[ -z "$TOKEN" ]]; then
   exit 1
 fi
 
-REMOTE="$(git remote get-url origin)"
 AUTH="Authorization: Basic $(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)"
 
-# The token goes in a request header, not the URL, so it cannot leak into
-# error output, the reflog, or .git/config.
-git -c http.extraheader="$AUTH" push "$REMOTE" "$BRANCH"
+# Push by remote NAME, not URL: pushing to a bare URL leaves refs/remotes/origin
+# un-updated, so `git status` then reports the branch as behind when it is not.
+# The token goes in a request header, so it never reaches the URL, the reflog,
+# or .git/config.
+git -c http.extraheader="$AUTH" push origin "$BRANCH"
+git -c http.extraheader="$AUTH" fetch origin --quiet
