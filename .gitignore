@@ -1,0 +1,32 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# --- Data: raw corpora and derived artifacts are not versioned ---
+01_Data/raw/
+01_Data/processed/
+01_Data/interim/
+!01_Data/**/.gitkeep
+!01_Data/**/*.md
+
+# --- Models ---
+02_Model/results/
+*.pkl
+*.joblib
+
+# --- Office / OneDrive noise ---
+~$*
+*.tmp
+.DS_Store
+Thumbs.db
+
+# --- Secrets ---
+05_Deployment/secrets/
+*.pem
+*.key
