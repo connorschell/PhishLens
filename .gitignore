@@ -30,3 +30,7 @@ Thumbs.db
 05_Deployment/secrets/
 *.pem
 *.key
+
+# --- Credentials: never commit. See 00_Admin/git-remote-access.md ---
+.git_token
+.secrets/
