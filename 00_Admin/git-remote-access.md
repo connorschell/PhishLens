@@ -68,8 +68,26 @@ Revoke and reissue if: the token appears in a chat, an email, or a screenshot;
 the laptop is lost; or the semester ends. Revoking is instant and breaks nothing
 except pushing — commits and history are unaffected.
 
+## Current token
+
+**Expires 2026-10-30 16:32 UTC.** Confirmed from the API response header, not
+assumed. That is 30 days, which covers through Weekly Update #5 — it will expire
+**before** the project ends on 2026-12-07, so it has to be rotated once mid-term.
+
+Put "rotate PhishLens GitHub token" in your calendar for the week of 2026-10-26.
+An expired token fails the push with a 403 that does not say "expired", and you
+will lose twenty minutes to it otherwise.
+
+This token was pasted into a chat transcript during setup on 2026-09-30 and kept
+rather than reissued — a deliberate call, on the grounds that its blast radius is
+one private coursework repo. That reasoning stops holding if the repo ever
+carries anything real: a live API key, the Safe Browsing key, VPS credentials,
+or `.env` with production values. None of those belong in git regardless, which
+is what `.gitignore` is enforcing.
+
 ## Rotation log
 
 | Date | Action | Reason |
 |---|---|---|
-| 2026-09-30 | Token #1 issued, used for the initial push, revoked same day | Pasted into a chat transcript during setup; replaced by the `.git_token` arrangement above |
+| 2026-09-30 | Token #1 issued, scoped to PhishLens, Contents read/write, expires 2026-10-30 | Initial push of WU2 work |
+| _due week of 2026-10-26_ | Rotate token #1 | Expiry |
