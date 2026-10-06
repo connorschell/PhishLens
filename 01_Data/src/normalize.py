@@ -21,272 +21,36 @@ Usage
 from __future__ import annotations
 
 import argparse
-import email
-import email.policy
-import hashlib
 import json
 import os
 import re
 import sys
 import tarfile
+import hashlib
 from collections import Counter
 from datetime import datetime, timezone
-from email.header import decode_header, make_header
-from email.utils import parsedate_to_datetime, parseaddr
 from pathlib import Path
 
-from bs4 import BeautifulSoup
-
-try:
-    import tldextract
-
-    _EXTRACT = tldextract.TLDExtract(suffix_list_urls=())  # offline: bundled snapshot
-except Exception:  # pragma: no cover - tldextract is in requirements.txt
-    _EXTRACT = None
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from record_schema import SCHEMA_VERSION, Attachment, EmailRecord, Link  # noqa: E402
+from record_schema import SCHEMA_VERSION, EmailRecord  # noqa: E402
 
 DATA_DIR = Path(__file__).resolve().parents[1]
 RAW_DIR = Path(os.environ.get("PHISHLENS_RAW_DIR") or DATA_DIR / "raw")
 OUT_DIR = DATA_DIR / "processed" / "normalized"
 
-URL_RE = re.compile(r"""https?://[^\s<>"'\])}]+""", re.IGNORECASE)
+# The parser lives in parse_email.py (WBS 1.3). normalize.py imports it rather
+# than carrying a second copy, so corpus records and live Gmail records can never
+# drift apart.
+from parse_email import parse_raw_message  # noqa: E402
+
 HEX_RUN_RE = re.compile(r"[0-9a-f]{8,}", re.IGNORECASE)
 DIGIT_RE = re.compile(r"\d+")
-WS_RE = re.compile(r"\s+")
 
 
-# --------------------------------------------------------------------------- #
-# helpers
-# --------------------------------------------------------------------------- #
-def decode_hdr(value: object | None) -> str:
-    """Decode RFC 2047 encoded-words; fall back to the raw string.
-
-    Values arriving from email.message can be str or email.header.Header, and
-    malformed corpus messages produce both, so everything is coerced to str first.
-    """
-    if not value:
-        return ""
-    value = str(value)
-    try:
-        return str(make_header(decode_header(value))).strip()
-    except Exception:
-        return str(value).strip()
-
-
-def registered_domain(host: str) -> str:
-    if not host:
-        return ""
-    host = host.strip().strip(".").lower()
-    if _EXTRACT is not None:
-        parts = _EXTRACT(host)
-        if parts.domain and parts.suffix:
-            return f"{parts.domain}.{parts.suffix}"
-        return parts.domain or host
-    bits = host.split(".")
-    return ".".join(bits[-2:]) if len(bits) >= 2 else host
-
-
-def host_of(url: str) -> str:
-    m = re.match(r"^\s*([a-z][a-z0-9+.-]*)://([^/?#\s]+)", url, re.IGNORECASE)
-    if not m:
-        return ""
-    netloc = m.group(2)
-    netloc = netloc.split("@")[-1]  # strip userinfo, a classic obfuscation
-    return netloc.split(":")[0].lower()
-
-
-def scheme_of(url: str) -> str:
-    m = re.match(r"^\s*([a-z][a-z0-9+.-]*)://", url, re.IGNORECASE)
-    return m.group(1).lower() if m else ""
-
-
-def domain_of_address(addr: str) -> str:
-    return addr.split("@")[-1].strip().lower() if "@" in addr else ""
-
-
-def html_to_text(html: str) -> tuple[str, list[tuple[str, str]]]:
-    """Return (visible text, [(href, anchor text)])."""
-    try:
-        soup = BeautifulSoup(html, "lxml")  # ~3x faster than html.parser on real mail
-    except Exception:
-        soup = BeautifulSoup(html, "html.parser")
-    anchors = []
-    for a in soup.find_all("a"):
-        href = (a.get("href") or "").strip()
-        if href:
-            anchors.append((href, a.get_text(" ", strip=True)))
-    for tag in soup(["script", "style", "head"]):
-        tag.decompose()
-    return soup.get_text(" ", strip=True), anchors
-
-
-# --------------------------------------------------------------------------- #
-# parsing
-# --------------------------------------------------------------------------- #
 def parse_message(raw: bytes, source: str, group: str, path: str, label: str) -> EmailRecord:
-    warnings: list[str] = []
-    try:
-        msg = email.message_from_bytes(raw, policy=email.policy.compat32)
-    except Exception as exc:
-        warnings.append(f"parse_failed:{type(exc).__name__}")
-        msg = email.message_from_string("", policy=email.policy.compat32)
-
-    rec = EmailRecord(
-        record_id=hashlib.sha256(raw).hexdigest()[:24],
-        source_corpus=source,
-        source_group=group,
-        source_path=path,
-        label=label,
-        schema_version=SCHEMA_VERSION,
-    )
-
-    # --- sender and envelope ---
-    from_display, from_addr = parseaddr(decode_hdr(msg.get("From")))
-    rec.from_display = from_display
-    rec.from_address = from_addr.lower()
-    rec.from_domain = domain_of_address(rec.from_address)
-    rec.from_registered_domain = registered_domain(rec.from_domain)
-
-    _, reply_to = parseaddr(decode_hdr(msg.get("Reply-To")))
-    rec.reply_to_address = reply_to.lower()
-    rec.reply_to_domain = domain_of_address(rec.reply_to_address)
-
-    _, return_path = parseaddr(decode_hdr(msg.get("Return-Path")))
-    rec.return_path_address = return_path.lower()
-
-    competing = {
-        registered_domain(d)
-        for d in (rec.reply_to_domain, domain_of_address(rec.return_path_address))
-        if d
-    }
-    rec.sender_mismatch = bool(
-        rec.from_registered_domain and competing and rec.from_registered_domain not in competing
-    )
-
-    _, to_addr = parseaddr(decode_hdr(msg.get("To")))
-    rec.to_address = to_addr.lower()
-    rec.subject = decode_hdr(msg.get("Subject"))
-    rec.message_id = decode_hdr(msg.get("Message-ID"))
-    rec.date_raw = decode_hdr(msg.get("Date"))
-    if rec.date_raw:
-        try:
-            dt = parsedate_to_datetime(rec.date_raw)
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
-            rec.date_iso = dt.astimezone(timezone.utc).isoformat(timespec="seconds")
-        except Exception:
-            warnings.append("unparsable_date")
-
-    rec.received_count = len(msg.get_all("Received") or [])
-    rec.auth_results_present = any(
-        msg.get(h) for h in ("Authentication-Results", "Received-SPF", "DKIM-Signature")
-    )
-    rec.list_unsubscribe_present = bool(msg.get("List-Unsubscribe"))
-
-    # --- body and attachments ---
-    text_parts: list[str] = []
-    html_parts: list[str] = []
-    for part in msg.walk():
-        if part.is_multipart():
-            continue
-        ctype = (part.get_content_type() or "").lower()
-        disposition = str(part.get("Content-Disposition") or "").lower()
-        filename = decode_hdr(part.get_filename())
-
-        if filename or "attachment" in disposition:
-            payload = part.get_payload(decode=True) or b""
-            rec.attachments.append(
-                Attachment(
-                    filename=filename or "(unnamed)",
-                    content_type=ctype,
-                    size_bytes=len(payload),
-                )
-            )
-            continue
-
-        payload = part.get_payload(decode=True)
-        if payload is None:
-            continue
-        charset = part.get_content_charset() or "utf-8"
-        try:
-            text = payload.decode(charset, errors="replace")
-        except (LookupError, UnicodeDecodeError):
-            text = payload.decode("utf-8", errors="replace")
-            # Malformed messages put whole HTML documents in the charset parameter,
-            # so the label is clipped before it becomes a report key.
-            label = re.sub(r"[^A-Za-z0-9_.:-]", "", str(charset))[:24] or "unknown"
-            warnings.append(f"charset_fallback:{label}")
-
-        if ctype == "text/plain":
-            text_parts.append(text)
-        elif ctype == "text/html":
-            html_parts.append(text)
-
-    rec.has_text_part = bool(text_parts)
-    rec.has_html_part = bool(html_parts)
-
-    anchors: list[tuple[str, str]] = []
-    if html_parts:
-        for html in html_parts:
-            visible, found = html_to_text(html)
-            anchors.extend(found)
-            if not text_parts:
-                text_parts.append(visible)
-
-    body = WS_RE.sub(" ", "\n".join(text_parts)).strip()
-    rec.body_text = body
-    rec.body_char_count = len(body)
-    rec.body_word_count = len(body.split())
-    if not body and not rec.attachments:
-        warnings.append("empty_body")
-
-    # --- links: anchors first, then bare URLs in the text ---
-    seen: set[str] = set()
-    for href, anchor_text in anchors:
-        if not href.lower().startswith(("http://", "https://")):
-            continue
-        host = host_of(href)
-        reg = registered_domain(host)
-        anchor_domains = {registered_domain(host_of(u)) for u in URL_RE.findall(anchor_text)}
-        anchor_domains.discard("")
-        mismatch = bool(anchor_domains and reg and reg not in anchor_domains)
-        rec.links.append(
-            Link(
-                url=href[:2048],
-                host=host,
-                registered_domain=reg,
-                scheme=scheme_of(href),
-                display_text=anchor_text[:200],
-                in_html=True,
-                display_mismatch=mismatch,
-            )
-        )
-        seen.add(href)
-
-    for url in URL_RE.findall(body):
-        url = url.rstrip(".,;:!?")
-        if url in seen:
-            continue
-        seen.add(url)
-        host = host_of(url)
-        rec.links.append(
-            Link(
-                url=url[:2048],
-                host=host,
-                registered_domain=registered_domain(host),
-                scheme=scheme_of(url),
-                in_html=False,
-            )
-        )
-
-    rec.link_count = len(rec.links)
-    rec.distinct_link_domains = len({lk.registered_domain for lk in rec.links if lk.registered_domain})
-    rec.display_mismatch_count = sum(1 for lk in rec.links if lk.display_mismatch)
-    rec.attachment_count = len(rec.attachments)
-    rec.parse_warnings = sorted(set(warnings))
-    return rec
+    """Thin wrapper kept so existing callers and tests keep working."""
+    return parse_raw_message(raw, source, group, path, label)
 
 
 # --------------------------------------------------------------------------- #
