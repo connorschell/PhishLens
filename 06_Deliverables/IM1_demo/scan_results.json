@@ -1,0 +1,219 @@
+{
+  "generated_utc": "2026-10-15T18:57:06+00:00",
+  "model_variant": "full",
+  "n_scanned": 2546,
+  "selected": [
+    {
+      "record_id": "6cc2d0017bb743eb91cb76ce",
+      "truth": "phish",
+      "from_display": "LEDGER",
+      "from_address": "no-reply@notification.circle.so",
+      "subject": "KYC verification has not yet been done for your account.",
+      "body_preview": "-------------------------------------------------------- KYC verification has not yet been done for your account. -------------------------------------------------------- Dear Users, We are reaching out to inform you about an essential security update regarding your Wallet. To further strengthen the protection of your assets, we are implementing Two-Factor Authentication (2FA) on our platform. As of Wednesday, 5 November 2025, all accounts without Two-Factor Authentication will face temporary suspension, and associated wallets will be frozen. During this time, you won't be able to send or trad",
+      "link_count": 8,
+      "panel": {
+        "risk_score": 100,
+        "probability": 0.9988671153544024,
+        "severity": "dangerous",
+        "headline": "Strong signs of phishing",
+        "advice": "Do not click links or open attachments in this message.",
+        "signals": [
+          {
+            "kind": "rule",
+            "rule": "link_display_mismatch",
+            "text": "A link reads \"https://www.ledger.com/wallet/device-verify\" but opens circle.so."
+          },
+          {
+            "kind": "model",
+            "feature": "max_url_length",
+            "text": "Its longest link is 369 characters, long enough to push the real destination out of view.",
+            "share": 0.3909,
+            "contribution": 6.0817
+          },
+          {
+            "kind": "model",
+            "feature": "link_count",
+            "text": "It contains 8 links.",
+            "share": 0.0537,
+            "contribution": 0.8361
+          },
+          {
+            "kind": "model",
+            "feature": "credential_term_count",
+            "text": "It refers to passwords, sign-in, or account verification in 1 different way.",
+            "share": 0.0535,
+            "contribution": 0.8326
+          }
+        ],
+        "mitigating": [
+          {
+            "feature": "link_domain_matches_sender",
+            "text": "Its links lead to the same website the message was sent from.",
+            "contribution": -5.7872
+          },
+          {
+            "feature": "sender_reply_to_mismatch",
+            "text": "Replies would go back to the address it came from.",
+            "contribution": -0.1518
+          },
+          {
+            "feature": "urgency_term_count",
+            "text": "It does not push for an urgent response.",
+            "contribution": -0.0712
+          }
+        ],
+        "model_variant": "full",
+        "signals_considered": 43
+      },
+      "caption": "Caught - phishing, both explanation layers"
+    },
+    {
+      "record_id": "1e54d08093b4f42aa5b9ce99",
+      "truth": "ham",
+      "from_display": "Liam Bedford",
+      "from_address": "lbedford@lbedford.org",
+      "subject": "Re: [ILUG-Social] Completely silent pc",
+      "body_preview": "On Sat, 20 Jul 2002 18:15:12 +0100 kevin lyda claiming to think: > On Fri, Jul 19, 2002 at 10:19:50PM -0700, Rick Moen wrote: > > Some people strip down old 486 boxes, take out the hard drive, disable > > the fans, and run the thing from just a floppy drive or a CDR you've > > burned for the purpose. > > what about using a pcmcia card and a compaq flash card? or doing an > nfs boot to a server in a noiser part of the house? (the boiler room > or something like that) > hmm. there are versions of OpenBSD that run from a 32M compact flash IIRC. and antefacto's software ran in 64M. there are CF->I",
+      "link_count": 1,
+      "panel": {
+        "risk_score": 0,
+        "probability": 0.004924474244302384,
+        "severity": "clear",
+        "headline": "Nothing notable found",
+        "advice": "No action suggested.",
+        "signals": [],
+        "mitigating": [
+          {
+            "feature": "no_link_matches_sender_domain",
+            "text": "At least one link matches the sending domain.",
+            "contribution": -1.8375
+          },
+          {
+            "feature": "urgency_term_count",
+            "text": "It does not push for an urgent response.",
+            "contribution": -0.0712
+          },
+          {
+            "feature": "credential_term_count",
+            "text": "It does not ask about passwords or account sign-in.",
+            "contribution": -0.054
+          }
+        ],
+        "model_variant": "full",
+        "signals_considered": 43
+      },
+      "caption": "Cleared - ordinary mail"
+    },
+    {
+      "record_id": "8e8a965dd00c2737e56e18d7",
+      "truth": "phish",
+      "from_display": "",
+      "from_address": "rachid",
+      "subject": "CONTACT USING BELOW reference number",
+      "body_preview": "Dear Friend , Since i waited so long without hearing from you regarding your confirm able draft worth of $7,500000,I went ahead and cashed the money and registered it with Trans world courier service as box of African clothes with instruction to deliver it to you upon your contact to their office, i am leaving today to another country for three months course.You can contact them now to avoid them delaying with the box. use below reference number { 29377 } Bear in mind that i have paid all the charges they requested,Both mailing charges and insurance.All you need to do is to pay their security ",
+      "link_count": 0,
+      "panel": {
+        "risk_score": 30,
+        "probability": 0.298721575961973,
+        "severity": "caution",
+        "headline": "A few things look off",
+        "advice": "Worth a second look before you act on it.",
+        "signals": [
+          {
+            "kind": "model",
+            "feature": "has_generic_greeting",
+            "text": "It opens with a generic greeting rather than your name.",
+            "share": 0.0995,
+            "contribution": 1.2214
+          }
+        ],
+        "mitigating": [
+          {
+            "feature": "urgency_term_count",
+            "text": "It does not push for an urgent response.",
+            "contribution": -0.0712
+          },
+          {
+            "feature": "credential_term_count",
+            "text": "It does not ask about passwords or account sign-in.",
+            "contribution": -0.054
+          },
+          {
+            "feature": "has_link_display_mismatch",
+            "text": "No link shows one website and opens another.",
+            "contribution": -0.0277
+          }
+        ],
+        "model_variant": "full",
+        "signals_considered": 43
+      },
+      "caption": "Near miss - phishing the model was unsure about"
+    },
+    {
+      "record_id": "a1e227e3a4fdae527a349d1f",
+      "truth": "ham",
+      "from_display": "Media Unspun",
+      "from_address": "guterman@mediaunspun.imakenews.net",
+      "subject": "Brother, Can You Spare a Jet?",
+      "body_preview": "To view this newsletter in full-color, visit: http://newsletter.mediaunspun.com/index000018838.cfm MEDIA UNSPUN What the Press is Reporting and Why (www.mediaunspun.com) ----------------------------------------------------------------- August 12, 2002 ----------------------------------------------------------------- IN THIS ISSUE ----------------------------------------------------------------- * BROTHER, CAN YOU SPARE A JET? * REMEMBER GLOBAL CROSSING? * OTHER STORIES Media Unspun serves business news and analysis, authoritatively and irreverently, every business day. An annual subscription c",
+      "link_count": 36,
+      "panel": {
+        "risk_score": 93,
+        "probability": 0.9317470049326929,
+        "severity": "dangerous",
+        "headline": "Strong signs of phishing",
+        "advice": "Do not click links or open attachments in this message.",
+        "signals": [
+          {
+            "kind": "model",
+            "feature": "max_url_length",
+            "text": "Its longest link is 349 characters, long enough to push the real destination out of view.",
+            "share": 0.4085,
+            "contribution": 5.9292
+          },
+          {
+            "kind": "model",
+            "feature": "has_url_shortener",
+            "text": "A link goes through a URL shortener, which hides its real destination.",
+            "share": 0.2929,
+            "contribution": 4.251
+          },
+          {
+            "kind": "model",
+            "feature": "link_count",
+            "text": "It contains 36 links.",
+            "share": 0.1355,
+            "contribution": 1.9669
+          },
+          {
+            "kind": "model",
+            "feature": "financial_term_count",
+            "text": "It refers to payment or banking in 2 different ways.",
+            "share": 0.0555,
+            "contribution": 0.8058
+          }
+        ],
+        "mitigating": [
+          {
+            "feature": "no_link_matches_sender_domain",
+            "text": "At least one link matches the sending domain.",
+            "contribution": -1.8375
+          },
+          {
+            "feature": "sender_reply_to_mismatch",
+            "text": "Replies would go back to the address it came from.",
+            "contribution": -0.1518
+          },
+          {
+            "feature": "urgency_term_count",
+            "text": "It does not push for an urgent response.",
+            "contribution": -0.0712
+          }
+        ],
+        "model_variant": "full",
+        "signals_considered": 43
+      },
+      "caption": "False positive - the worst one in the test set"
+    }
+  ]
+}

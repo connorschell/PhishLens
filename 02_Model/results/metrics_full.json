@@ -1,0 +1,417 @@
+{
+  "variant": "full",
+  "evaluated_utc": "2026-10-15T18:52:08+00:00",
+  "n_test": 2546,
+  "n_features": 43,
+  "ablated_features": [],
+  "ranking": {
+    "roc_auc": 0.9781,
+    "pr_auc": 0.9832
+  },
+  "gbm_reference": {
+    "roc_auc": 0.9959,
+    "pr_auc": 0.9968
+  },
+  "at_decision_threshold": {
+    "threshold": 0.2978,
+    "precision": 0.8819,
+    "recall": 0.9561,
+    "f1": 0.9175,
+    "fpr_overall": 0.1484,
+    "fpr_ham": 0.1186,
+    "fpr_spam": 0.2161,
+    "confusion": {
+      "tp": 1307,
+      "fp": 175,
+      "fn": 60,
+      "tn": 1004
+    }
+  },
+  "at_tier_thresholds": {
+    "dangerous": {
+      "threshold": 0.8882,
+      "precision": 0.9891,
+      "recall": 0.7944,
+      "f1": 0.8811,
+      "fpr_overall": 0.0102,
+      "fpr_ham": 0.0061,
+      "fpr_spam": 0.0194,
+      "confusion": {
+        "tp": 1086,
+        "fp": 12,
+        "fn": 281,
+        "tn": 1167
+      }
+    },
+    "suspicious": {
+      "threshold": 0.7413,
+      "precision": 0.9768,
+      "recall": 0.8632,
+      "f1": 0.9165,
+      "fpr_overall": 0.0237,
+      "fpr_ham": 0.0171,
+      "fpr_spam": 0.0388,
+      "confusion": {
+        "tp": 1180,
+        "fp": 28,
+        "fn": 187,
+        "tn": 1151
+      }
+    },
+    "caution": {
+      "threshold": 0.2978,
+      "precision": 0.8819,
+      "recall": 0.9561,
+      "f1": 0.9175,
+      "fpr_overall": 0.1484,
+      "fpr_ham": 0.1186,
+      "fpr_spam": 0.2161,
+      "confusion": {
+        "tp": 1307,
+        "fp": 175,
+        "fn": 60,
+        "tn": 1004
+      }
+    }
+  },
+  "threshold_sweep": [
+    {
+      "threshold": 0.1,
+      "precision": 0.8178,
+      "recall": 0.9817,
+      "f1": 0.8923,
+      "fpr_overall": 0.2536,
+      "fpr_ham": 0.1883,
+      "fpr_spam": 0.4017,
+      "confusion": {
+        "tp": 1342,
+        "fp": 299,
+        "fn": 25,
+        "tn": 880
+      }
+    },
+    {
+      "threshold": 0.15,
+      "precision": 0.8419,
+      "recall": 0.9781,
+      "f1": 0.9049,
+      "fpr_overall": 0.2129,
+      "fpr_ham": 0.1589,
+      "fpr_spam": 0.3352,
+      "confusion": {
+        "tp": 1337,
+        "fp": 251,
+        "fn": 30,
+        "tn": 928
+      }
+    },
+    {
+      "threshold": 0.2,
+      "precision": 0.8595,
+      "recall": 0.9715,
+      "f1": 0.9121,
+      "fpr_overall": 0.1841,
+      "fpr_ham": 0.1443,
+      "fpr_spam": 0.2742,
+      "confusion": {
+        "tp": 1328,
+        "fp": 217,
+        "fn": 39,
+        "tn": 962
+      }
+    },
+    {
+      "threshold": 0.25,
+      "precision": 0.8677,
+      "recall": 0.9642,
+      "f1": 0.9134,
+      "fpr_overall": 0.1705,
+      "fpr_ham": 0.132,
+      "fpr_spam": 0.2576,
+      "confusion": {
+        "tp": 1318,
+        "fp": 201,
+        "fn": 49,
+        "tn": 978
+      }
+    },
+    {
+      "threshold": 0.3,
+      "precision": 0.8824,
+      "recall": 0.9554,
+      "f1": 0.9175,
+      "fpr_overall": 0.1476,
+      "fpr_ham": 0.1174,
+      "fpr_spam": 0.2161,
+      "confusion": {
+        "tp": 1306,
+        "fp": 174,
+        "fn": 61,
+        "tn": 1005
+      }
+    },
+    {
+      "threshold": 0.35,
+      "precision": 0.9032,
+      "recall": 0.9488,
+      "f1": 0.9254,
+      "fpr_overall": 0.1179,
+      "fpr_ham": 0.0905,
+      "fpr_spam": 0.1801,
+      "confusion": {
+        "tp": 1297,
+        "fp": 139,
+        "fn": 70,
+        "tn": 1040
+      }
+    },
+    {
+      "threshold": 0.4,
+      "precision": 0.9234,
+      "recall": 0.9429,
+      "f1": 0.933,
+      "fpr_overall": 0.0908,
+      "fpr_ham": 0.0685,
+      "fpr_spam": 0.1413,
+      "confusion": {
+        "tp": 1289,
+        "fp": 107,
+        "fn": 78,
+        "tn": 1072
+      }
+    },
+    {
+      "threshold": 0.45,
+      "precision": 0.9347,
+      "recall": 0.9312,
+      "f1": 0.9329,
+      "fpr_overall": 0.0755,
+      "fpr_ham": 0.0562,
+      "fpr_spam": 0.1191,
+      "confusion": {
+        "tp": 1273,
+        "fp": 89,
+        "fn": 94,
+        "tn": 1090
+      }
+    },
+    {
+      "threshold": 0.5,
+      "precision": 0.9481,
+      "recall": 0.9217,
+      "f1": 0.9347,
+      "fpr_overall": 0.0585,
+      "fpr_ham": 0.0403,
+      "fpr_spam": 0.0997,
+      "confusion": {
+        "tp": 1260,
+        "fp": 69,
+        "fn": 107,
+        "tn": 1110
+      }
+    },
+    {
+      "threshold": 0.55,
+      "precision": 0.9578,
+      "recall": 0.9129,
+      "f1": 0.9348,
+      "fpr_overall": 0.0466,
+      "fpr_ham": 0.0342,
+      "fpr_spam": 0.0748,
+      "confusion": {
+        "tp": 1248,
+        "fp": 55,
+        "fn": 119,
+        "tn": 1124
+      }
+    },
+    {
+      "threshold": 0.6,
+      "precision": 0.9641,
+      "recall": 0.9027,
+      "f1": 0.9324,
+      "fpr_overall": 0.039,
+      "fpr_ham": 0.0293,
+      "fpr_spam": 0.0609,
+      "confusion": {
+        "tp": 1234,
+        "fp": 46,
+        "fn": 133,
+        "tn": 1133
+      }
+    },
+    {
+      "threshold": 0.65,
+      "precision": 0.9672,
+      "recall": 0.8844,
+      "f1": 0.924,
+      "fpr_overall": 0.0348,
+      "fpr_ham": 0.0244,
+      "fpr_spam": 0.0582,
+      "confusion": {
+        "tp": 1209,
+        "fp": 41,
+        "fn": 158,
+        "tn": 1138
+      }
+    },
+    {
+      "threshold": 0.7,
+      "precision": 0.9746,
+      "recall": 0.8713,
+      "f1": 0.92,
+      "fpr_overall": 0.0263,
+      "fpr_ham": 0.0171,
+      "fpr_spam": 0.0471,
+      "confusion": {
+        "tp": 1191,
+        "fp": 31,
+        "fn": 176,
+        "tn": 1148
+      }
+    },
+    {
+      "threshold": 0.75,
+      "precision": 0.9784,
+      "recall": 0.8625,
+      "f1": 0.9168,
+      "fpr_overall": 0.0221,
+      "fpr_ham": 0.0147,
+      "fpr_spam": 0.0388,
+      "confusion": {
+        "tp": 1179,
+        "fp": 26,
+        "fn": 188,
+        "tn": 1153
+      }
+    },
+    {
+      "threshold": 0.8,
+      "precision": 0.9822,
+      "recall": 0.8471,
+      "f1": 0.9097,
+      "fpr_overall": 0.0178,
+      "fpr_ham": 0.0098,
+      "fpr_spam": 0.036,
+      "confusion": {
+        "tp": 1158,
+        "fp": 21,
+        "fn": 209,
+        "tn": 1158
+      }
+    },
+    {
+      "threshold": 0.85,
+      "precision": 0.9859,
+      "recall": 0.8208,
+      "f1": 0.8958,
+      "fpr_overall": 0.0136,
+      "fpr_ham": 0.0098,
+      "fpr_spam": 0.0222,
+      "confusion": {
+        "tp": 1122,
+        "fp": 16,
+        "fn": 245,
+        "tn": 1163
+      }
+    },
+    {
+      "threshold": 0.9,
+      "precision": 0.9908,
+      "recall": 0.7893,
+      "f1": 0.8787,
+      "fpr_overall": 0.0085,
+      "fpr_ham": 0.0037,
+      "fpr_spam": 0.0194,
+      "confusion": {
+        "tp": 1079,
+        "fp": 10,
+        "fn": 288,
+        "tn": 1169
+      }
+    },
+    {
+      "threshold": 0.95,
+      "precision": 0.993,
+      "recall": 0.7213,
+      "f1": 0.8356,
+      "fpr_overall": 0.0059,
+      "fpr_ham": 0.0,
+      "fpr_spam": 0.0194,
+      "confusion": {
+        "tp": 986,
+        "fp": 7,
+        "fn": 381,
+        "tn": 1172
+      }
+    }
+  ],
+  "severity_tier_distribution": {
+    "clear": {
+      "n": 1064,
+      "pct_phishing": 5.6
+    },
+    "caution": {
+      "n": 274,
+      "pct_phishing": 46.4
+    },
+    "suspicious": {
+      "n": 110,
+      "pct_phishing": 85.5
+    },
+    "dangerous": {
+      "n": 1098,
+      "pct_phishing": 98.9
+    }
+  },
+  "top_weights_by_magnitude": [
+    {
+      "feature": "max_url_length",
+      "weight": 4.304
+    },
+    {
+      "feature": "no_link_matches_sender_domain",
+      "weight": -2.621
+    },
+    {
+      "feature": "link_domain_matches_sender",
+      "weight": -2.152
+    },
+    {
+      "feature": "has_http_only_link",
+      "weight": -2.148
+    },
+    {
+      "feature": "distinct_link_domain_count",
+      "weight": -1.28
+    },
+    {
+      "feature": "subject_nonascii",
+      "weight": 1.267
+    },
+    {
+      "feature": "has_url_shortener",
+      "weight": 1.146
+    },
+    {
+      "feature": "subject_has_reply_prefix",
+      "weight": -0.829
+    },
+    {
+      "feature": "sender_display_nonascii",
+      "weight": 0.789
+    },
+    {
+      "feature": "max_subdomain_depth",
+      "weight": -0.671
+    },
+    {
+      "feature": "sender_domain_digit_count",
+      "weight": 0.61
+    },
+    {
+      "feature": "link_count",
+      "weight": 0.608
+    }
+  ]
+}

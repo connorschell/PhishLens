@@ -16,9 +16,16 @@ venv/
 !01_Data/**/*.md
 
 # --- Models ---
-02_Model/results/
+# Large or regenerable artifacts stay out; the model bundles, the metrics and the
+# written results are the record of what was measured, so they are versioned.
+02_Model/results/*
+!02_Model/results/*.md
+!02_Model/results/model_*.json
+!02_Model/results/metrics_*.json
+!02_Model/results/.gitkeep
 *.pkl
 *.joblib
+*.npy
 
 # --- Office / OneDrive noise ---
 ~$*

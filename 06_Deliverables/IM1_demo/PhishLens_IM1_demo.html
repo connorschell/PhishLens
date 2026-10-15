@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PhishLens - IM1 demo</title>
+<style>
+  :root { --line:#dadce0; --ink:#202124; --muted:#5f6368; --bg:#f6f8fc; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:15px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+  header { padding:22px 28px 14px; }
+  h1 { margin:0; font-size:21px; font-weight:600; }
+  header p { margin:4px 0 0; color:var(--muted); font-size:13px; }
+  .tabs { display:flex; gap:8px; padding:12px 28px 0; flex-wrap:wrap; }
+  .tab { border:1px solid var(--line); background:#fff; border-radius:999px;
+          padding:7px 15px; font-size:13px; cursor:pointer; color:var(--muted); }
+  .tab.active { background:var(--ink); border-color:var(--ink); color:#fff; }
+  .screen { display:none; padding:14px 28px 32px; }
+  .screen.active { display:block; }
+  .caption { font-size:13px; color:var(--muted); margin:10px 0 12px; }
+  .caption strong { color:var(--ink); }
+  .truth { margin-left:10px; }
+  .split { display:grid; grid-template-columns:1fr 340px; gap:18px; align-items:stretch; }
+  .mail, .panel { background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; }
+  .panel { align-self:start; }
+  .mail { display:flex; flex-direction:column; }
+  .body { flex:1; }
+  .subject { font-size:20px; margin-bottom:14px; word-break:break-word; }
+  .from { display:flex; gap:11px; align-items:center; padding-bottom:14px;
+           border-bottom:1px solid var(--line); margin-bottom:14px; }
+  .avatar { width:36px; height:36px; border-radius:50%; background:#5f6368; color:#fff;
+             display:grid; place-items:center; font-weight:600; flex:none; }
+  .name { font-weight:600; font-size:14px; }
+  .addr { color:var(--muted); font-size:12px; word-break:break-all; }
+  .body { white-space:pre-wrap; word-break:break-word; font-size:14px; color:#3c4043; }
+  .meta { margin-top:14px; font-size:12px; color:var(--muted); }
+  .brand { font-weight:600; letter-spacing:.3px; font-size:13px;
+            text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+  .verdict { border:1px solid; border-radius:10px; padding:14px; text-align:center; }
+  .score { font-size:34px; font-weight:700; line-height:1; }
+  .score span { font-size:14px; font-weight:500; opacity:.65; }
+  .tier { font-size:11px; letter-spacing:1.4px; margin-top:6px; font-weight:700; }
+  .headline { font-size:13px; margin-top:6px; }
+  .advice { font-size:13px; color:var(--muted); margin:12px 0 4px; }
+  .panel h4 { font-size:12px; text-transform:uppercase; letter-spacing:.6px;
+               color:var(--muted); margin:16px 0 8px; }
+  ul { list-style:none; margin:0; padding:0; }
+  .sig { display:flex; gap:8px; align-items:baseline; padding:8px 0;
+          border-top:1px solid #eceff1; font-size:13px; }
+  .tag { font-size:9px; letter-spacing:.7px; text-transform:uppercase; padding:2px 5px;
+          border-radius:4px; background:#eceff1; color:var(--muted); flex:none; }
+  .sig.rule .tag { background:#e8eaf6; color:#3949ab; }
+  .txt { flex:1; }
+  .share { color:var(--muted); font-size:11px; flex:none; }
+  .mitig ul li { font-size:13px; color:#3c4043; padding:6px 0; border-top:1px solid #eceff1; }
+  .foot { margin-top:16px; font-size:11px; color:var(--muted); line-height:1.5; }
+  footer { padding:0 28px 40px; color:var(--muted); font-size:12px; max-width:900px; }
+  code { background:#fff; border:1px solid var(--line); border-radius:4px; padding:1px 5px; }
+  @media (max-width:860px) { .split { grid-template-columns:1fr; } }
+</style></head><body>
+<header>
+  <h1>PhishLens &mdash; explanation panel, driven by the real model</h1>
+  <p>Generated 2026-10-15 by <code>06_Deliverables/IM1_demo/scan_demo.py</code>.
+     Messages are from the held-out test split; the model never saw them in training.
+     Scores, tiers and sentences are produced by WBS 2.1&ndash;2.3 at render time &mdash; none are written by hand.</p>
+</header>
+<div class="tabs"><button class="tab active" data-i="0">Caught</button><button class="tab" data-i="1">Cleared</button><button class="tab" data-i="2">Near miss</button><button class="tab" data-i="3">False positive</button></div>
+
+<section class="screen active" id="screen-0">
+  <div class="caption"><strong>Caught - phishing, both explanation layers</strong>
+    <span class="truth">ground truth: phishing &middot; held-out test split</span></div>
+  <div class="split">
+    <div class="mail">
+      <div class="subject">KYC verification has not yet been done for your account.</div>
+      <div class="from"><span class="avatar">L</span>
+        <div><div class="name">LEDGER</div>
+             <div class="addr">&lt;no-reply@notification.circle.so&gt;</div></div></div>
+      <div class="body">-------------------------------------------------------- KYC verification has not yet been done for your account. -------------------------------------------------------- Dear Users, We are reaching out to inform you about an essential security update regarding your Wallet. To further strengthen the protection of your assets, we are implementing Two-Factor Authentication (2FA) on our platform. As of Wednesday, 5 November 2025, all accounts without Two-Factor Authentication will face temporary suspension, and associated wallets will be frozen. During this time, you won&#x27;t be able to send or trad&hellip;</div>
+      <div class="meta">8 links in this message</div>
+    </div>
+    <aside class="panel">
+      <div class="brand">PhishLens</div>
+      <div class="verdict" style="background:#fceeed;color:#b3261e;border-color:#b3261e33">
+        <div class="score">100<span>/100</span></div>
+        <div class="tier">DANGEROUS</div>
+        <div class="headline">Strong signs of phishing</div>
+      </div>
+      <p class="advice">Do not click links or open attachments in this message.</p>
+      <h4>Why</h4>
+      <ul class="signals"><li class="sig rule"><span class="tag">rule</span><span class="txt">A link reads &quot;https://www.ledger.com/wallet/device-verify&quot; but opens circle.so.</span></li><li class="sig model"><span class="tag">model</span><span class="txt">Its longest link is 369 characters, long enough to push the real destination out of view.</span><span class="share">39%</span></li><li class="sig model"><span class="tag">model</span><span class="txt">It contains 8 links.</span><span class="share">5%</span></li><li class="sig model"><span class="tag">model</span><span class="txt">It refers to passwords, sign-in, or account verification in 1 different way.</span><span class="share">5%</span></li></ul>
+      <div class="mitig"><h4>Points the other way</h4><ul><li>Its links lead to the same website the message was sent from.</li><li>Replies would go back to the address it came from.</li><li>It does not push for an urgent response.</li></ul></div>
+      <div class="foot">43 features considered &middot;
+        percentages are each signal's share of the model's evidence toward phishing</div>
+    </aside>
+  </div>
+</section>
+<section class="screen" id="screen-1">
+  <div class="caption"><strong>Cleared - ordinary mail</strong>
+    <span class="truth">ground truth: legitimate &middot; held-out test split</span></div>
+  <div class="split">
+    <div class="mail">
+      <div class="subject">Re: [ILUG-Social] Completely silent pc</div>
+      <div class="from"><span class="avatar">L</span>
+        <div><div class="name">Liam Bedford</div>
+             <div class="addr">&lt;lbedford@lbedford.org&gt;</div></div></div>
+      <div class="body">On Sat, 20 Jul 2002 18:15:12 +0100 kevin lyda claiming to think: &gt; On Fri, Jul 19, 2002 at 10:19:50PM -0700, Rick Moen wrote: &gt; &gt; Some people strip down old 486 boxes, take out the hard drive, disable &gt; &gt; the fans, and run the thing from just a floppy drive or a CDR you&#x27;ve &gt; &gt; burned for the purpose. &gt; &gt; what about using a pcmcia card and a compaq flash card? or doing an &gt; nfs boot to a server in a noiser part of the house? (the boiler room &gt; or something like that) &gt; hmm. there are versions of OpenBSD that run from a 32M compact flash IIRC. and antefacto&#x27;s software ran in 64M. there are CF-&gt;I&hellip;</div>
+      <div class="meta">1 link in this message</div>
+    </div>
+    <aside class="panel">
+      <div class="brand">PhishLens</div>
+      <div class="verdict" style="background:#edf7f0;color:#136c3a;border-color:#136c3a33">
+        <div class="score">0<span>/100</span></div>
+        <div class="tier">CLEAR</div>
+        <div class="headline">Nothing notable found</div>
+      </div>
+      <p class="advice">No action suggested.</p>
+      <h4>Why</h4>
+      <ul class="signals"><li class="sig none"><span class="txt">No signals above the reporting threshold.</span></li></ul>
+      <div class="mitig"><h4>Points the other way</h4><ul><li>At least one link matches the sending domain.</li><li>It does not push for an urgent response.</li><li>It does not ask about passwords or account sign-in.</li></ul></div>
+      <div class="foot">43 features considered &middot;
+        percentages are each signal's share of the model's evidence toward phishing</div>
+    </aside>
+  </div>
+</section>
+<section class="screen" id="screen-2">
+  <div class="caption"><strong>Near miss - phishing the model was unsure about</strong>
+    <span class="truth">ground truth: phishing &middot; held-out test split</span></div>
+  <div class="split">
+    <div class="mail">
+      <div class="subject">CONTACT USING BELOW reference number</div>
+      <div class="from"><span class="avatar">R</span>
+        <div><div class="name"><em>(no display name)</em></div>
+             <div class="addr">&lt;rachid&gt;</div></div></div>
+      <div class="body">Dear Friend , Since i waited so long without hearing from you regarding your confirm able draft worth of $7,500000,I went ahead and cashed the money and registered it with Trans world courier service as box of African clothes with instruction to deliver it to you upon your contact to their office, i am leaving today to another country for three months course.You can contact them now to avoid them delaying with the box. use below reference number { 29377 } Bear in mind that i have paid all the charges they requested,Both mailing charges and insurance.All you need to do is to pay their security &hellip;</div>
+      <div class="meta">0 links in this message</div>
+    </div>
+    <aside class="panel">
+      <div class="brand">PhishLens</div>
+      <div class="verdict" style="background:#fdf8e3;color:#7a5d00;border-color:#7a5d0033">
+        <div class="score">30<span>/100</span></div>
+        <div class="tier">CAUTION</div>
+        <div class="headline">A few things look off</div>
+      </div>
+      <p class="advice">Worth a second look before you act on it.</p>
+      <h4>Why</h4>
+      <ul class="signals"><li class="sig model"><span class="tag">model</span><span class="txt">It opens with a generic greeting rather than your name.</span><span class="share">10%</span></li></ul>
+      <div class="mitig"><h4>Points the other way</h4><ul><li>It does not push for an urgent response.</li><li>It does not ask about passwords or account sign-in.</li><li>No link shows one website and opens another.</li></ul></div>
+      <div class="foot">43 features considered &middot;
+        percentages are each signal's share of the model's evidence toward phishing</div>
+    </aside>
+  </div>
+</section>
+<section class="screen" id="screen-3">
+  <div class="caption"><strong>False positive - the worst one in the test set</strong>
+    <span class="truth">ground truth: legitimate &middot; held-out test split</span></div>
+  <div class="split">
+    <div class="mail">
+      <div class="subject">Brother, Can You Spare a Jet?</div>
+      <div class="from"><span class="avatar">M</span>
+        <div><div class="name">Media Unspun</div>
+             <div class="addr">&lt;guterman@mediaunspun.imakenews.net&gt;</div></div></div>
+      <div class="body">To view this newsletter in full-color, visit: http://newsletter.mediaunspun.com/index000018838.cfm MEDIA UNSPUN What the Press is Reporting and Why (www.mediaunspun.com) ----------------------------------------------------------------- August 12, 2002 ----------------------------------------------------------------- IN THIS ISSUE ----------------------------------------------------------------- * BROTHER, CAN YOU SPARE A JET? * REMEMBER GLOBAL CROSSING? * OTHER STORIES Media Unspun serves business news and analysis, authoritatively and irreverently, every business day. An annual subscription c&hellip;</div>
+      <div class="meta">36 links in this message</div>
+    </div>
+    <aside class="panel">
+      <div class="brand">PhishLens</div>
+      <div class="verdict" style="background:#fceeed;color:#b3261e;border-color:#b3261e33">
+        <div class="score">93<span>/100</span></div>
+        <div class="tier">DANGEROUS</div>
+        <div class="headline">Strong signs of phishing</div>
+      </div>
+      <p class="advice">Do not click links or open attachments in this message.</p>
+      <h4>Why</h4>
+      <ul class="signals"><li class="sig model"><span class="tag">model</span><span class="txt">Its longest link is 349 characters, long enough to push the real destination out of view.</span><span class="share">41%</span></li><li class="sig model"><span class="tag">model</span><span class="txt">A link goes through a URL shortener, which hides its real destination.</span><span class="share">29%</span></li><li class="sig model"><span class="tag">model</span><span class="txt">It contains 36 links.</span><span class="share">14%</span></li><li class="sig model"><span class="tag">model</span><span class="txt">It refers to payment or banking in 2 different ways.</span><span class="share">6%</span></li></ul>
+      <div class="mitig"><h4>Points the other way</h4><ul><li>At least one link matches the sending domain.</li><li>Replies would go back to the address it came from.</li><li>It does not push for an urgent response.</li></ul></div>
+      <div class="foot">43 features considered &middot;
+        percentages are each signal's share of the model's evidence toward phishing</div>
+    </aside>
+  </div>
+</section>
+<footer>
+  Model: logistic regression on 43 named features, trained on 10152
+  campaign-split messages. At the <strong>dangerous</strong> threshold the model reaches
+  precision 0.9891, recall 0.7944, and a false-positive rate of
+  0.6% on ordinary correspondence. The panel layout previews WBS 4.3;
+  the extension itself is week 6&ndash;7 work.
+</footer>
+<script>
+  document.querySelectorAll('.tab').forEach(function (t) {
+    t.addEventListener('click', function () {
+      document.querySelectorAll('.tab').forEach(function (x) { x.classList.remove('active'); });
+      document.querySelectorAll('.screen').forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      document.getElementById('screen-' + t.dataset.i).classList.add('active');
+    });
+  });
+</script>
+</body></html>
