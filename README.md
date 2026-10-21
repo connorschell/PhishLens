@@ -39,10 +39,29 @@ OpenAPI schema that defines the extension-to-API contract.
 ## Local development
 
 ```bash
-cp .env.example .env          # then edit the passwords
+cp .env.example .env          # then edit the passwords and the fingerprint salt
 docker compose up --build     # API on 127.0.0.1:8000, Postgres on 127.0.0.1:5432
 curl http://localhost:8000/health
+
+# register the trained model so /scan has something to score with
+docker compose exec api python 03_Backend/db/seed/seed_model_version.py --variant full --activate
+docker compose exec -T db psql -U phishlens -d phishlens < 03_Backend/db/seed/seed_dev_install.sql
+
+curl -X POST http://localhost:8000/scan \\
+  -H 'content-type: application/json' \\
+  -d '{"from_display":"LEDGER","subject":"Verify your account","body_text":"Confirm your password","body_html":"<a href=\"https://x.example\">https://www.ledger.com</a>"}'
 ```
+
+The database schema is created automatically on the first start of the database
+volume from `03_Backend/db/migrations/`. `03_Backend/db/schema.sql` is the
+annotated reference copy.
+
+### What the API stores
+
+Message content is never written to the database. A scan row holds the 43
+measurements, the score, the severity tier and the explanation, plus a salted
+fingerprint so a repeat scan is recognisable without the message being
+recoverable. The reasoning is in `00_Admin/data-handling.md`.
 
 Without Docker:
 

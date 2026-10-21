@@ -1,19 +1,24 @@
 """PhishLens API entrypoint.
 
-WBS 1.2 scaffold. Only /health exists so the container stack can be brought up
-and verified. /scan is added in WBS 3.3; /register and /feedback in WBS 3.4.
+WBS 3.3. /health reports the model and the database; /scan scores a message
+scraped from the Gmail page and returns the explanation panel.
+/register and /feedback land in WBS 3.4.
 """
 
+import logging
+
 from fastapi import FastAPI
+
+from .config import get_settings
+from .routes import health, scan
+
+logging.basicConfig(level=get_settings().log_level)
 
 app = FastAPI(
     title="PhishLens API",
     description="Explainable phishing detection for the Gmail web client.",
-    version="0.1.0",
+    version="0.2.0",
 )
 
-
-@app.get("/health", tags=["ops"])
-def health() -> dict[str, str]:
-    """Liveness probe. Extended in WBS 3.3 to report model and DB status."""
-    return {"status": "ok", "version": app.version}
+app.include_router(health.router)
+app.include_router(scan.router)
