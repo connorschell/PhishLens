@@ -1,0 +1,108 @@
+// PhishLens domain model / ERD -- Deliverable #5 (draft for IM1)
+// Generated from 03_Backend/db/schema.sql (WBS 3.1). Crow's-foot cardinality.
+digraph PhishLensERD {
+  rankdir=LR;
+  nodesep=1.1;
+  ranksep=2.4;
+  splines=spline;
+  overlap=false;
+  bgcolor="white";
+  graph [fontname="Helvetica", labelloc="t", fontsize=20,
+         label="PhishLens — Domain Model / Entity-Relationship Diagram\nPostgreSQL 16 · WBS 3.1 · no message content is stored\n"];
+  node  [shape=plaintext, fontname="Helvetica", fontsize=10];
+  edge  [fontname="Helvetica", fontsize=9, color="#444444", arrowsize=0.8];
+
+  installs [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#1f3864" COLSPAN="2"><FONT COLOR="white"><B>installs</B></FONT></TD></TR>
+    <TR><TD ALIGN="LEFT">PK</TD><TD ALIGN="LEFT">install_id : uuid</TD></TR>
+    <TR><TD ALIGN="LEFT">U</TD><TD ALIGN="LEFT">token_hash : bytea(32)</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">extension_version : text</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">client_platform : text</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">created_at : timestamptz</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">last_seen_at : timestamptz</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">revoked_at : timestamptz</TD></TR>
+    <TR><TD COLSPAN="2" ALIGN="LEFT"><FONT POINT-SIZE="8" COLOR="#777777">one row per extension installation<BR ALIGN="LEFT"/>token is an identifier, not a secret<BR ALIGN="LEFT"/></FONT></TD></TR>
+   </TABLE>>];
+
+  model_versions [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#1f3864" COLSPAN="2"><FONT COLOR="white"><B>model_versions</B></FONT></TD></TR>
+    <TR><TD ALIGN="LEFT">PK</TD><TD ALIGN="LEFT">model_version_id : serial</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">variant : full | ablated</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">trained_utc : timestamptz</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">n_features : int</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">n_train : int</TD></TR>
+    <TR><TD ALIGN="LEFT">U</TD><TD ALIGN="LEFT">bundle_sha256 : bytea</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">severity_tiers : jsonb</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">is_active : boolean</TD></TR>
+    <TR><TD COLSPAN="2" ALIGN="LEFT"><FONT POINT-SIZE="8" COLOR="#777777">unique index: exactly one active<BR ALIGN="LEFT"/>thresholds versioned with the model<BR ALIGN="LEFT"/></FONT></TD></TR>
+   </TABLE>>];
+
+  scans [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#7b1f1f" COLSPAN="2"><FONT COLOR="white"><B>scans</B></FONT></TD></TR>
+    <TR><TD ALIGN="LEFT">PK</TD><TD ALIGN="LEFT">scan_id : bigserial</TD></TR>
+    <TR><TD ALIGN="LEFT">FK</TD><TD ALIGN="LEFT">install_id : uuid NULL</TD></TR>
+    <TR><TD ALIGN="LEFT">FK</TD><TD ALIGN="LEFT">model_version_id : int</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">message_fingerprint : bytea(32)</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">risk_score : smallint 0–100</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">probability : double</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">severity : clear|caution|<BR ALIGN="LEFT"/>   suspicious|dangerous</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">features : jsonb (43 values)</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">scored_at : timestamptz</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">duration_ms : int</TD></TR>
+    <TR><TD COLSPAN="2" ALIGN="LEFT"><FONT POINT-SIZE="8" COLOR="#7b1f1f"><B>no subject / body / sender column</B><BR ALIGN="LEFT"/>salted fingerprint, not reversible<BR ALIGN="LEFT"/></FONT></TD></TR>
+   </TABLE>>];
+
+  indicators [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#1f3864" COLSPAN="2"><FONT COLOR="white"><B>indicators</B></FONT></TD></TR>
+    <TR><TD ALIGN="LEFT">PK</TD><TD ALIGN="LEFT">indicator_id : bigserial</TD></TR>
+    <TR><TD ALIGN="LEFT">FK</TD><TD ALIGN="LEFT">scan_id : bigint</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">rank : smallint</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">kind : model | rule</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">feature : text NULL</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">rule : text NULL</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">display_text : text</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">share : real 0–1</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">contribution : double</TD></TR>
+    <TR><TD COLSPAN="2" ALIGN="LEFT"><FONT POINT-SIZE="8" COLOR="#777777">the explanation as shown;<BR ALIGN="LEFT"/>stored, not recomputed<BR ALIGN="LEFT"/></FONT></TD></TR>
+   </TABLE>>];
+
+  feedback [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#1f3864" COLSPAN="2"><FONT COLOR="white"><B>feedback</B></FONT></TD></TR>
+    <TR><TD ALIGN="LEFT">PK</TD><TD ALIGN="LEFT">feedback_id : bigserial</TD></TR>
+    <TR><TD ALIGN="LEFT">FK</TD><TD ALIGN="LEFT">scan_id : bigint</TD></TR>
+    <TR><TD ALIGN="LEFT">FK</TD><TD ALIGN="LEFT">install_id : uuid NULL</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">disagreement : false_positive |<BR ALIGN="LEFT"/>   false_negative</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">note : text ≤ 500</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">created_at : timestamptz</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">reviewed_at : timestamptz</TD></TR>
+    <TR><TD COLSPAN="2" ALIGN="LEFT"><FONT POINT-SIZE="8" COLOR="#777777">unique (scan_id, install_id)<BR ALIGN="LEFT"/>review signal, never ground truth<BR ALIGN="LEFT"/></FONT></TD></TR>
+   </TABLE>>];
+
+  url_reputation [label=<
+   <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="4">
+    <TR><TD BGCOLOR="#555555" COLSPAN="2"><FONT COLOR="white"><B>url_reputation</B></FONT></TD></TR>
+    <TR><TD ALIGN="LEFT">PK</TD><TD ALIGN="LEFT">url_sha256 : bytea(32)</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">verdict : safe|unsafe|unknown</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">threat_type : text</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">source : text</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">checked_at : timestamptz</TD></TR>
+    <TR><TD ALIGN="LEFT"></TD><TD ALIGN="LEFT">expires_at : timestamptz</TD></TR>
+    <TR><TD COLSPAN="2" ALIGN="LEFT"><FONT POINT-SIZE="8" COLOR="#777777">lookup cache, no FK by design:<BR ALIGN="LEFT"/>keyed by URL hash, not by scan.<BR ALIGN="LEFT"/>expiry drives graceful degradation<BR ALIGN="LEFT"/></FONT></TD></TR>
+   </TABLE>>];
+
+  edge [dir=forward, arrowhead=crow, arrowsize=1.1, labeldistance=2.6, labelfontsize=11, fontsize=10];
+
+  installs       -> scans      [label="performs\n(ON DELETE SET NULL)", taillabel="1", headlabel="0..N", labelangle=22];
+  model_versions -> scans      [label="produced\n", taillabel="1", headlabel="1..N", labelangle=-22];
+  scans          -> indicators [label="explained by\n(ON DELETE CASCADE)", taillabel="1", headlabel="1..N", labelangle=22];
+  scans          -> feedback   [label="disputed by\n(ON DELETE CASCADE)", taillabel="1", headlabel="0..1", arrowhead=tee, labelangle=-22];
+  installs       -> feedback   [label="submits", taillabel="1", headlabel="0..N", labelangle=22];
+
+  { rank=same; installs; model_versions; }
+  { rank=same; indicators; feedback; }
+}

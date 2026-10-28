@@ -1,0 +1,40 @@
+<!doctype html><html><head><meta charset=utf-8><title>PhishLens - API and database</title>
+<style>body{font:15px/1.55 Segoe UI,system-ui,sans-serif;margin:0;background:#f6f8fc;color:#202124}
+.w{max-width:880px;margin:0 auto;padding:26px}h1{font-size:22px;margin:0 0 4px}
+.m{color:#5f6368;font-size:13px;margin-bottom:20px}
+.c{background:#fff;border:1px solid #dadce0;border-radius:10px;padding:16px 20px;margin-bottom:16px}
+h2{font-size:15px;margin:0 0 10px;color:#11202e}
+pre{background:#f1f3f4;border-radius:6px;padding:12px;overflow:auto;font:12.5px/1.5 Consolas,monospace;margin:0}
+ul{margin:8px 0 0;padding-left:18px}li{margin:5px 0}
+.k{display:inline-block;background:#e8eaed;border-radius:4px;padding:1px 6px;font-size:11px;margin-right:6px}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{border:1px solid #dadce0;padding:6px 9px;text-align:left}
+th{background:#f1f3f4}.b{font-size:26px;font-weight:700}</style></head><body><div class=w>
+<h1>PhishLens — API and database</h1>
+<div class=m>Output captured from a real run on 28 October 2026, 15:36. This page is a record of that run, not a live connection.</div>
+<div class=c><h2>GET /health</h2><pre>{
+  &quot;status&quot;: &quot;ok&quot;,
+  &quot;version&quot;: &quot;0.2.0&quot;,
+  &quot;model_loaded&quot;: true,
+  &quot;model_variant&quot;: &quot;full&quot;,
+  &quot;model_trained_utc&quot;: &quot;2026-10-15T18:51:29+00:00&quot;,
+  &quot;database&quot;: &quot;unavailable (no DATABASE_URL configured)&quot;
+}</pre></div>
+<div class=c><h2>POST /scan — request sent</h2><pre>{
+  &quot;from_display&quot;: &quot;LEDGER&quot;,
+  &quot;from_address&quot;: &quot;no-reply@notification.circle.so&quot;,
+  &quot;reply_to_address&quot;: &quot;&quot;,
+  &quot;subject&quot;: &quot;KYC verification has not yet been done for your account.&quot;,
+  &quot;body_text&quot;: &quot;-------------------------------------------------------- KYC verification has not yet been done for your account. -------------------------------------------------------- Dear Users, We are reaching out to inform you about an essential security update regarding your Wallet. To further strengthen the protection of your assets, we are implementing Two-Factor Authentication (2FA) on our platform. As of Wednesday, 5 November 2025, all accounts without Two-Factor Authentication will face temporary suspension, and associated wallets will be frozen. During this time, you won&#x27;t be able to send or trad&quot;,</pre></div>
+<div class=c><h2>POST /scan — response (200)</h2>
+<div class=b>50 / 100 &nbsp;<span style="font-size:15px;color:#5f6368">caution</span></div>
+<div style="margin:6px 0 2px"><b>A few things look off</b></div>
+<div class=m>Worth a second look before you act on it. &nbsp;·&nbsp; 43 features considered · 80 ms · persisted=False</div>
+<ul><li><span class=k>model</span> It refers to passwords, sign-in, or account verification in 1 different way.</li></ul></div>
+<div class=c><h2>Database — 6 tables (installs, model_versions, scans, indicators, url_reputation, feedback)</h2><table><tr><th>Table</th><th>Holds</th></tr>
+<tr><td>installs</td><td>One row per extension install; token stored as a 32-byte hash, individually revocable</td></tr>
+<tr><td>model_versions</td><td>Every trained model with its severity thresholds; exactly one active, enforced by a unique index</td></tr>
+<tr><td>scans</td><td>One row per scored message — no subject, body or sender column exists</td></tr>
+<tr><td>indicators</td><td>The explanation as shown to the user, stored rather than recomputed</td></tr>
+<tr><td>url_reputation</td><td>Safe Browsing cache keyed by URL hash, with expiry driving graceful degradation</td></tr>
+<tr><td>feedback</td><td>User disagreement with a verdict, one per install per scan</td></tr>
+</table></div></div></body></html>

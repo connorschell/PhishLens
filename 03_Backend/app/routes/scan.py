@@ -118,4 +118,6 @@ def scan(req: ScanRequest, authorization: str | None = Header(default=None)) -> 
         signals_considered=panel["signals_considered"],
         persisted=scan_id is not None,
         duration_ms=duration_ms,
+        model_severity=panel["model_severity"],
+        severity_floored_by=panel["severity_floored_by"],
     )

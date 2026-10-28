@@ -59,6 +59,11 @@ class ScanResponse(BaseModel):
     signals_considered: int
     persisted: bool
     duration_ms: int
+    model_severity: str = Field(
+        description="The tier the model alone produced, before any rule floor (WBS 2.3).")
+    severity_floored_by: str | None = Field(
+        default=None,
+        description="Name of the deterministic rule that raised the tier, or null if none did.")
 
 
 class HealthResponse(BaseModel):

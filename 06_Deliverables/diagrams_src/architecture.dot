@@ -1,0 +1,68 @@
+// PhishLens architecture -- Deliverable #6 (draft for IM1)
+// Trust boundaries and TLS termination. WBS 3.x / 5.x.
+digraph PhishLensArch {
+  rankdir=TB;
+  compound=true;
+  bgcolor="white";
+  graph [fontname="Helvetica", labelloc="t", fontsize=20,
+         label="PhishLens — System Architecture\nTrust boundaries and TLS termination · WBS 3 / 4 / 5\n"];
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10, fillcolor="#eef2f8", color="#1f3864", penwidth=1.2];
+  edge [fontname="Helvetica", fontsize=9, color="#333333"];
+
+  subgraph cluster_client {
+    label=<<B>Trust boundary 1 — the user's browser</B><BR/><FONT POINT-SIZE="9">untrusted from the server's point of view: the server validates, never trusts</FONT>>;
+    fontname="Helvetica"; fontsize=12; style="rounded,dashed"; color="#7b1f1f"; bgcolor="#fdf6f6"; penwidth=2;
+
+    gmail   [label="Gmail web client\n(rendered DOM)", fillcolor="#ffffff"];
+    content [label="Content script (MV3)\nWBS 4.2 — scrapes the open message\nWBS 4.3 — renders the panel"];
+    worker  [label="Service worker\nWBS 4.1 — registration, token\nchrome.storage.local"];
+    gmail -> content [label="  reads open message\n  no Gmail API, no OAuth"];
+    content -> worker [label="  token", style=dashed];
+  }
+
+  subgraph cluster_vps {
+    label=<<B>Trust boundary 2 — the VPS (Ubuntu, hardened)</B><BR/><FONT POINT-SIZE="9">WBS 5.1 — firewall, SSH key auth only</FONT>>;
+    fontname="Helvetica"; fontsize=12; style="rounded,dashed"; color="#1f3864"; bgcolor="#f5f8fd"; penwidth=2;
+
+    nginx [label="Nginx reverse proxy\nWBS 5.2 — TLS TERMINATES HERE\nLet's Encrypt certificate", fillcolor="#dfe9f7", penwidth=2];
+
+    subgraph cluster_docker {
+      label=<<B>Docker Compose network</B><BR/><FONT POINT-SIZE="9">not published to the host; reachable only through Nginx</FONT>>;
+      fontname="Helvetica"; fontsize=11; style="rounded"; color="#555555"; bgcolor="#ffffff";
+
+      api   [label="FastAPI service\n/health  /scan   (WBS 3.3 ✓)\n/register  /feedback  (WBS 3.4)"];
+      score [label="Scoring service\nparse_email → features →\ncontributions → explain\n(the same four modules as training)"];
+      model [label="Model bundle (JSON)\nmodel_versions.is_active", shape=note, fillcolor="#ffffff"];
+      pg    [label="PostgreSQL 16\ninstalls · model_versions · scans\nindicators · feedback · url_reputation", shape=cylinder, fillcolor="#e8f0e8", color="#2f5d2f"];
+      dash  [label="Web dashboard\nWBS 4.5 — history, feedback queue,\nmodel metrics"];
+
+      api -> score [label="  in-process"];
+      score -> model [label="  loads", style=dashed];
+      api -> pg [label="  persist (off the critical path:\n  failure ⇒ persisted=false,\n  verdict still returned)"];
+      dash -> pg [label="  reads"];
+    }
+    nginx -> api [label="  HTTP, internal network only"];
+    nginx -> dash [label="  HTTP"];
+  }
+
+  subgraph cluster_ext {
+    label=<<B>External dependency</B>>;
+    fontname="Helvetica"; fontsize=12; style="rounded,dashed"; color="#777777"; bgcolor="#fafafa";
+    gsb [label="Google Safe Browsing\nLookup API", fillcolor="#ffffff"];
+  }
+
+  content -> nginx [label="  HTTPS only — extension refuses plaintext origins\n  POST /scan  ·  Bearer per-install token (A-02)\n  message sent, never stored (data-handling.md)", color="#7b1f1f", penwidth=2, lhead=cluster_vps];
+  score -> gsb [label="  WBS 3.5 — one weighted input,\n  cached by URL hash, graceful\n  degradation on failure", style=dashed, color="#777777"];
+
+  maintainer [label="Model maintainer\ntrain / evaluate / promote", shape=box, style="rounded,filled", fillcolor="#fff6e5", color="#8a6d1f"];
+  maintainer -> pg [label="  SSH + CLI\n  (WBS 2.x)", style=dashed, color="#8a6d1f"];
+
+  legend [shape=plaintext, fillcolor="white", label=<
+    <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="2" CELLPADDING="3" COLOR="#999999">
+     <TR><TD COLSPAN="2"><B>Notes</B></TD></TR>
+     <TR><TD ALIGN="LEFT">TLS</TD><TD ALIGN="LEFT">terminates at Nginx; nothing behind it is reachable from the internet</TD></TR>
+     <TR><TD ALIGN="LEFT">Secrets</TD><TD ALIGN="LEFT">no credential ships in the extension; token issued at first run, stored hashed</TD></TR>
+     <TR><TD ALIGN="LEFT">Content</TD><TD ALIGN="LEFT">message exists in memory for the request only; no content column exists</TD></TR>
+     <TR><TD ALIGN="LEFT">Scoring</TD><TD ALIGN="LEFT">no LLM in the path; explanations are format strings over measured values</TD></TR>
+    </TABLE>>];
+}

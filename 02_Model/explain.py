@@ -20,6 +20,14 @@ different site than it opens is worth saying out loud even when the model's
 other evidence already decided the verdict - and because the rule layer keeps
 working if a model version ever regresses.
 
+A fired rule also puts a FLOOR under the severity tier (RULE_FLOORS). Without
+it the rule layer is decorative: the sentence appears in the list while the
+headline above it still reads "Nothing notable found", which is the state this
+code was in until a deployed scan reproduced it. The floor only raises a tier,
+never lowers one, and it deliberately does not touch risk_score. The score stays
+the model's honest output, so a floored panel reads as what it is - the model
+did not flag this, and a direct check did.
+
 No LLM is in this path. Every sentence is a format string over a measured
 value, which is what makes the explanation auditable.
 
@@ -49,6 +57,42 @@ TIER_ADVICE = {
     "caution": "Worth a second look before you act on it.",
     "clear": "No action suggested.",
 }
+
+# Tiers, weakest first. Used to compare a model tier against a rule floor.
+TIER_ORDER = ["clear", "caution", "suspicious", "dangerous"]
+
+# A fired rule cannot leave the verdict below this tier. These three checks are
+# categorical rather than probabilistic: each one is wrong on its own terms, so
+# a low model probability is not a reason to stay quiet about it.
+RULE_FLOORS = {
+    "link_display_mismatch": "suspicious",
+    "punycode_link": "suspicious",
+    "risky_attachment": "suspicious",
+}
+
+# Shown when a rule raised the tier above what the model alone would have said.
+# The split has to be explained, because the panel will show a low score beside
+# a high tier and that looks like a contradiction until it is named.
+RULE_FLOOR_HEADLINE = "A clear warning sign"
+RULE_FLOOR_ADVICE = ("The scoring model did not flag this message on its own, but a direct check "
+                     "found something that is wrong regardless of the score. Treat links and "
+                     "attachments here as untrusted.")
+
+
+def apply_rule_floor(severity: str, rules: list[dict]) -> tuple[str, str | None]:
+    """Raise severity to the highest floor among the rules that fired.
+
+    Returns the resulting tier and the rule that set it, or None if no rule
+    raised anything. Never lowers a tier.
+    """
+    floored_by = None
+    for r in rules:
+        floor = RULE_FLOORS.get(r.get("rule"))
+        if floor is None:
+            continue
+        if TIER_ORDER.index(floor) > TIER_ORDER.index(severity):
+            severity, floored_by = floor, r["rule"]
+    return severity, floored_by
 
 
 def _n(value: float) -> int:
@@ -238,6 +282,11 @@ def explain(record, features: dict[str, float], bundle: dict) -> dict:
     ranked = rules + signals
     ranked = ranked[:MAX_SIGNALS]
 
+    # The floor is computed from every rule that fired, not only the ones that
+    # survived the MAX_SIGNALS truncation - a rule dropped from the display is
+    # still a rule that fired.
+    severity, floored_by = apply_rule_floor(scored["severity"], rules)
+
     mitigating = []
     for c in scored["toward_legitimate"]:
         text = MITIGATING.get(c["feature"])
@@ -250,9 +299,11 @@ def explain(record, features: dict[str, float], bundle: dict) -> dict:
     return {
         "risk_score": round(scored["probability"] * 100),
         "probability": scored["probability"],
-        "severity": scored["severity"],
-        "headline": HEADLINES[scored["severity"]],
-        "advice": TIER_ADVICE[scored["severity"]],
+        "severity": severity,
+        "headline": RULE_FLOOR_HEADLINE if floored_by else HEADLINES[severity],
+        "advice": RULE_FLOOR_ADVICE if floored_by else TIER_ADVICE[severity],
+        "model_severity": scored["severity"],
+        "severity_floored_by": floored_by,
         "signals": ranked,
         "mitigating": mitigating,
         "model_variant": scored["model_variant"],
