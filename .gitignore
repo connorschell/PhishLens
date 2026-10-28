@@ -33,6 +33,9 @@ venv/
 .DS_Store
 Thumbs.db
 
+# --- Local-only compose overrides (port bindings, temporary exposure) ---
+docker-compose.override.yml
+
 # --- Secrets ---
 05_Deployment/secrets/
 *.pem

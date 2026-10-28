@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PhishLens — scan a message</title>
+<style>
+  :root{--line:#dadce0;--ink:#202124;--muted:#5f6368;--bg:#f6f8fc;--blue:#1a73e8;
+        --clear:#1e8e3e;--caution:#f9ab00;--suspicious:#e8710a;--dangerous:#d93025;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1040px;margin:0 auto;padding:28px 20px 60px}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  .cols{display:grid;grid-template-columns:1fr 380px;gap:22px;align-items:start}
+  @media(max-width:880px){.cols{grid-template-columns:1fr}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+  label{display:block;font-size:12px;color:var(--muted);margin:12px 0 4px;font-weight:600;
+        letter-spacing:.02em;text-transform:uppercase}
+  input,textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;
+                 font:14px/1.5 inherit;color:var(--ink);background:#fff}
+  textarea{resize:vertical;min-height:120px;font-family:inherit}
+  input:focus,textarea:focus{outline:2px solid var(--blue);outline-offset:-1px;border-color:transparent}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:620px){.row{grid-template-columns:1fr}}
+  button{margin-top:18px;background:var(--blue);color:#fff;border:0;border-radius:8px;
+         padding:11px 20px;font:600 14px inherit;cursor:pointer}
+  button:disabled{opacity:.55;cursor:default}
+  .ghost{background:#fff;color:var(--blue);border:1px solid var(--line);margin-left:8px}
+  .hint{font-size:12px;color:var(--muted);margin-top:10px}
+  .panel{position:sticky;top:20px}
+  .score{display:flex;align-items:baseline;gap:10px;margin-bottom:2px}
+  .num{font-size:40px;font-weight:700;line-height:1}
+  .tier{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+        padding:3px 9px;border-radius:999px;color:#fff}
+  .t-clear{background:var(--clear)}.t-caution{background:var(--caution)}
+  .t-suspicious{background:var(--suspicious)}.t-dangerous{background:var(--dangerous)}
+  .headline{font-size:16px;font-weight:600;margin:10px 0 2px}
+  .advice{color:var(--muted);font-size:13px;margin-bottom:14px}
+  .split{background:#fff8e1;border:1px solid #f6d58a;border-radius:8px;padding:10px 12px;
+         font-size:12.5px;color:#7a5900;margin-bottom:14px}
+  ul{list-style:none;margin:0;padding:0}
+  li{padding:9px 0;border-top:1px solid var(--line);font-size:13.5px;display:flex;gap:9px}
+  .kind{flex:0 0 auto;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+        padding:2px 6px;border-radius:4px;background:#e8eaed;color:var(--muted);height:fit-content;margin-top:2px}
+  .kind.rule{background:#fce8e6;color:#c5221f}
+  h3{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+     margin:18px 0 0;font-weight:700}
+  .meta{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);
+        font-size:11.5px;color:var(--muted);line-height:1.7}
+  .empty{color:var(--muted);font-size:13.5px;padding:10px 0}
+  .err{color:var(--dangerous);font-size:13px}
+</style></head><body><div class="wrap">
+
+<h1>PhishLens</h1>
+<div class="sub">Paste a message and see the risk score with the signals that produced it. Explainable phishing detection for the Gmail web client.</div>
+
+<div class="cols">
+  <div class="card">
+    <div class="row">
+      <div><label for="from_display">Sender name</label>
+        <input id="from_display" placeholder="Ledger Support"></div>
+      <div><label for="from_address">Sender address</label>
+        <input id="from_address" placeholder="support@ledqer-secure.com"></div>
+    </div>
+    <div class="row">
+      <div><label for="reply_to_address">Reply-to (optional)</label>
+        <input id="reply_to_address" placeholder="recovery@mail.ru"></div>
+      <div><label for="subject">Subject</label>
+        <input id="subject" placeholder="Urgent: verify your wallet"></div>
+    </div>
+    <label for="body_text">Message text</label>
+    <textarea id="body_text" placeholder="Paste the body of the email here."></textarea>
+    <label for="body_html">HTML (optional — needed to catch link mismatches)</label>
+    <textarea id="body_html" placeholder='&lt;a href="http://ledqer-secure.com/v"&gt;ledger.com/verify&lt;/a&gt;'></textarea>
+    <button id="go">Scan message</button>
+    <button id="sample" class="ghost" type="button">Load a sample</button>
+    <div class="hint">Nothing you paste is stored. The server keeps the 43 measurements, the score and the explanation — there is no column for a subject, body or sender address.</div>
+    <div id="err" class="err"></div>
+  </div>
+
+  <div class="card panel">
+    <div id="out"><div class="empty">No scan yet. Paste a message and press Scan.</div></div>
+  </div>
+</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+$("sample").onclick = () => {
+  $("from_display").value = "Ledger Support";
+  $("from_address").value = "support@ledqer-secure.com";
+  $("reply_to_address").value = "recovery@mail.ru";
+  $("subject").value = "Urgent: your wallet will be suspended in 24 hours";
+  $("body_text").value = "Your Ledger wallet has been flagged for unusual activity. Verify your recovery phrase immediately or access will be permanently suspended.";
+  $("body_html").value = '<p>Your wallet has been flagged. <a href="http://ledqer-secure.com/verify">ledger.com/verify</a></p>';
+};
+
+$("go").onclick = async () => {
+  const btn = $("go"); btn.disabled = true; $("err").textContent = "";
+  const payload = {
+    from_display: $("from_display").value, from_address: $("from_address").value,
+    reply_to_address: $("reply_to_address").value, subject: $("subject").value,
+    body_text: $("body_text").value, body_html: $("body_html").value, attachments: []
+  };
+  try {
+    const r = await fetch("/scan", {method:"POST", headers:{"content-type":"application/json"},
+                                    body: JSON.stringify(payload)});
+    if (!r.ok) throw new Error("HTTP " + r.status + " — " + (await r.text()).slice(0,200));
+    render(await r.json());
+  } catch (e) { $("err").textContent = e.message; }
+  finally { btn.disabled = false; }
+};
+
+function render(d) {
+  const sig = (d.signals || []).map(s =>
+    `<li><span class="kind ${s.kind === 'rule' ? 'rule' : ''}">${esc(s.kind)}</span><span>${esc(s.text)}</span></li>`).join("");
+  const mit = (d.mitigating || []).map(m => `<li><span class="kind">for</span><span>${esc(m.text)}</span></li>`).join("");
+  const floored = d.severity_floored_by
+    ? `<div class="split"><b>Why the score and the tier disagree.</b> The model scored this ${d.risk_score}/100, which on its own reads
+       <b>${esc(d.model_severity)}</b>. A deterministic check — <code>${esc(d.severity_floored_by)}</code> — fired, and those are
+       categorical rather than statistical, so the tier is raised regardless of the score.</div>` : "";
+  $("out").innerHTML = `
+    <div class="score"><div class="num">${d.risk_score}</div>
+      <span class="tier t-${esc(d.severity)}">${esc(d.severity)}</span></div>
+    <div class="headline">${esc(d.headline)}</div>
+    <div class="advice">${esc(d.advice)}</div>
+    ${floored}
+    ${sig ? `<h3>What it found</h3><ul>${sig}</ul>` : `<div class="empty">No signals above the reporting threshold.</div>`}
+    ${mit ? `<h3>What argues for it</h3><ul>${mit}</ul>` : ""}
+    <div class="meta">
+      ${d.signals_considered} features considered &middot; model <b>${esc(d.model_variant)}</b> &middot; ${d.duration_ms} ms<br>
+      ${d.persisted ? `recorded as scan ${d.scan_id}` : "not recorded — the database was unavailable, the verdict is unaffected"}
+    </div>`;
+}
+</script></body></html>
