@@ -30,7 +30,10 @@ joblib==1.4.2
 httpx==0.28.1
 
 # --- Auth + rate limiting (WBS 3.4) ---
-slowapi==0.1.9
+# limits directly, not slowapi: slowapi's route decorator rewrites the handler
+# signature and FastAPI then stops treating the request body as a body.
+# See 03_Backend/app/ratelimit.py.
+limits==5.8.0
 
 # --- Dev / test ---
 pytest==8.3.4

@@ -1,0 +1,638 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PhishLens API",
+    "description": "Explainable phishing detection for the Gmail web client.",
+    "version": "0.3.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/register": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register",
+        "operationId": "register_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scan": {
+      "post": {
+        "tags": [
+          "scan"
+        ],
+        "summary": "Scan",
+        "operationId": "scan_scan_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/feedback": {
+      "post": {
+        "tags": [
+          "feedback"
+        ],
+        "summary": "Submit Feedback",
+        "operationId": "submit_feedback_feedback_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AttachmentIn": {
+        "properties": {
+          "filename": {
+            "type": "string",
+            "maxLength": 400,
+            "title": "Filename",
+            "default": ""
+          },
+          "content_type": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Content Type",
+            "default": ""
+          },
+          "size_bytes": {
+            "type": "integer",
+            "maximum": 5000000000.0,
+            "minimum": 0.0,
+            "title": "Size Bytes",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "AttachmentIn"
+      },
+      "FeedbackRequest": {
+        "properties": {
+          "scan_id": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Scan Id"
+          },
+          "disagreement": {
+            "type": "string",
+            "pattern": "^(false_positive|false_negative)$",
+            "title": "Disagreement"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scan_id",
+          "disagreement"
+        ],
+        "title": "FeedbackRequest",
+        "description": "A user disagreeing with a verdict (WBS 4.4 control posts this)."
+      },
+      "FeedbackResponse": {
+        "properties": {
+          "feedback_id": {
+            "type": "integer",
+            "title": "Feedback Id"
+          },
+          "scan_id": {
+            "type": "integer",
+            "title": "Scan Id"
+          },
+          "disagreement": {
+            "type": "string",
+            "title": "Disagreement"
+          },
+          "recorded_at": {
+            "type": "string",
+            "title": "Recorded At"
+          },
+          "note_stored": {
+            "type": "boolean",
+            "title": "Note Stored"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feedback_id",
+          "scan_id",
+          "disagreement",
+          "recorded_at",
+          "note_stored"
+        ],
+        "title": "FeedbackResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "model_loaded": {
+            "type": "boolean",
+            "title": "Model Loaded"
+          },
+          "model_variant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Variant"
+          },
+          "model_trained_utc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Trained Utc"
+          },
+          "database": {
+            "type": "string",
+            "title": "Database"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "version",
+          "model_loaded",
+          "database"
+        ],
+        "title": "HealthResponse"
+      },
+      "MitigatingOut": {
+        "properties": {
+          "feature": {
+            "type": "string",
+            "title": "Feature"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feature",
+          "text"
+        ],
+        "title": "MitigatingOut"
+      },
+      "RegisterRequest": {
+        "properties": {
+          "extension_version": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Extension Version",
+            "default": "0.0.0"
+          },
+          "client_platform": {
+            "type": "string",
+            "maxLength": 30,
+            "title": "Client Platform",
+            "default": "chrome"
+          }
+        },
+        "type": "object",
+        "title": "RegisterRequest",
+        "description": "First-run call from the extension's service worker (A-02)."
+      },
+      "RegisterResponse": {
+        "properties": {
+          "install_id": {
+            "type": "string",
+            "title": "Install Id"
+          },
+          "token": {
+            "type": "string",
+            "title": "Token",
+            "description": "Returned once and never again; only its hash is stored."
+          },
+          "issued_at": {
+            "type": "string",
+            "title": "Issued At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "install_id",
+          "token",
+          "issued_at"
+        ],
+        "title": "RegisterResponse"
+      },
+      "ScanRequest": {
+        "properties": {
+          "from_display": {
+            "type": "string",
+            "maxLength": 400,
+            "title": "From Display",
+            "default": ""
+          },
+          "from_address": {
+            "type": "string",
+            "maxLength": 320,
+            "title": "From Address",
+            "default": ""
+          },
+          "reply_to_address": {
+            "type": "string",
+            "maxLength": 320,
+            "title": "Reply To Address",
+            "default": ""
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 998,
+            "title": "Subject",
+            "default": ""
+          },
+          "body_text": {
+            "type": "string",
+            "maxLength": 200000,
+            "title": "Body Text",
+            "default": ""
+          },
+          "body_html": {
+            "type": "string",
+            "maxLength": 500000,
+            "title": "Body Html",
+            "default": ""
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/AttachmentIn"
+            },
+            "type": "array",
+            "maxItems": 25,
+            "title": "Attachments"
+          }
+        },
+        "type": "object",
+        "title": "ScanRequest",
+        "description": "What the content script scrapes from the rendered Gmail page (WBS 4.2)."
+      },
+      "ScanResponse": {
+        "properties": {
+          "scan_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scan Id",
+            "description": "Null when the scan could not be recorded; the verdict is unaffected."
+          },
+          "risk_score": {
+            "type": "integer",
+            "title": "Risk Score"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "headline": {
+            "type": "string",
+            "title": "Headline"
+          },
+          "advice": {
+            "type": "string",
+            "title": "Advice"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/SignalOut"
+            },
+            "type": "array",
+            "title": "Signals"
+          },
+          "mitigating": {
+            "items": {
+              "$ref": "#/components/schemas/MitigatingOut"
+            },
+            "type": "array",
+            "title": "Mitigating"
+          },
+          "model_variant": {
+            "type": "string",
+            "title": "Model Variant"
+          },
+          "signals_considered": {
+            "type": "integer",
+            "title": "Signals Considered"
+          },
+          "persisted": {
+            "type": "boolean",
+            "title": "Persisted"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "title": "Duration Ms"
+          },
+          "model_severity": {
+            "type": "string",
+            "title": "Model Severity",
+            "description": "The tier the model alone produced, before any rule floor (WBS 2.3)."
+          },
+          "severity_floored_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Severity Floored By",
+            "description": "Name of the deterministic rule that raised the tier, or null if none did."
+          }
+        },
+        "type": "object",
+        "required": [
+          "risk_score",
+          "severity",
+          "headline",
+          "advice",
+          "signals",
+          "mitigating",
+          "model_variant",
+          "signals_considered",
+          "persisted",
+          "duration_ms",
+          "model_severity"
+        ],
+        "title": "ScanResponse"
+      },
+      "SignalOut": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "feature": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature"
+          },
+          "rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule"
+          },
+          "share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Share"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "text"
+        ],
+        "title": "SignalOut"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

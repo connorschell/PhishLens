@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PhishLens — Interface Mockups</title>
+<style>
+  :root{
+    --bg:#e9ebee;
+    --card:#ffffff;
+    --line:#e2e4e7;
+    --line-soft:#f0f1f3;
+    --text:#1f2328;
+    --text-2:#5c636b;
+    --text-3:#8b929a;
+
+    --clear:#2e6b41;
+    --clear-bg:#e9f2ec;
+    --caution:#8a6a12;
+    --caution-bg:#f7f1e0;
+    --suspicious:#a1521a;
+    --suspicious-bg:#f8ece2;
+    --dangerous:#9c2d24;
+    --dangerous-bg:#f8e9e7;
+
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:40px 24px 80px;
+    background:var(--bg);
+    font-family:var(--sans);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1060px; margin:0 auto}
+
+  /* ------------------------------------------------------------ header -- */
+  .doc-head{border-bottom:2px solid var(--text); padding-bottom:14px; margin-bottom:8px}
+  h1{font-size:20px; font-weight:600; margin:0 0 6px; letter-spacing:-.01em}
+  .meta{font-family:var(--mono); font-size:11px; color:var(--text-2); line-height:1.8}
+  .meta b{color:var(--text); font-weight:500}
+
+  /* ----------------------------------------------------------- section -- */
+  section{margin-top:52px}
+  .sec-label{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--text-3);
+    border-bottom:1px solid var(--line); padding-bottom:7px; margin-bottom:6px;
+  }
+  h2{font-size:15px; font-weight:600; margin:14px 0 6px}
+  .sub{font-size:13px; color:var(--text-2); line-height:1.65; margin:0 0 24px; max-width:76ch}
+  .cap{
+    font-family:var(--mono); font-size:11px; color:var(--text-3);
+    margin-top:10px; line-height:1.7;
+  }
+
+  /* ------------------------------------------------- mail client frame -- */
+  .mail{
+    background:var(--card); border:1px solid var(--line); border-radius:6px;
+    max-width:760px; overflow:hidden;
+  }
+  .mail-chrome{
+    display:flex; align-items:center; gap:10px;
+    padding:9px 16px; border-bottom:1px solid var(--line-soft);
+    font-family:var(--mono); font-size:10.5px; color:var(--text-3);
+    letter-spacing:.06em; text-transform:uppercase;
+  }
+  .dot{width:9px; height:9px; border-radius:50%; background:#d7dade}
+  .mail-subject{padding:18px 20px 4px; font-size:19px; font-weight:400}
+  .mail-from{
+    display:flex; align-items:center; gap:10px; padding:6px 20px 16px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .avatar{
+    width:34px; height:34px; border-radius:50%; background:#d9dde1; flex:none;
+    display:grid; place-items:center; font-size:13px; color:#7c848c; font-weight:600;
+  }
+  .from-lines{font-size:13px; line-height:1.45}
+  .from-lines .addr{color:var(--text-3); font-size:12px}
+  .mail-body{
+    padding:20px; font-size:13.5px; line-height:1.65; color:#333a41;
+  }
+  .mail-body a{color:#2d6ab0}
+  .mail-body p{margin:0 0 12px}
+
+  /* ------------------------------------------------------- the panel --- */
+  .panel-slot{padding:16px 20px 0}
+  .panel{
+    border:1px solid var(--line); border-radius:6px; overflow:hidden;
+    font-size:13px; background:#fff;
+  }
+  .panel-head{
+    display:flex; align-items:center; gap:8px;
+    padding:10px 14px; border-bottom:1px solid var(--line-soft);
+  }
+  .mark{width:14px; height:14px; flex:none}
+  .wordmark{font-size:12.5px; font-weight:600; letter-spacing:.01em}
+  .panel-head .right{
+    margin-left:auto; font-family:var(--mono); font-size:10px; color:var(--text-3);
+  }
+
+  .verdict{display:flex; gap:14px; padding:15px 14px 14px}
+  .dial{position:relative; width:58px; height:58px; flex:none}
+  .dial .num{
+    position:absolute; inset:0; display:grid; place-items:center;
+    font-size:20px; font-weight:600; letter-spacing:-.02em;
+  }
+  .tier{
+    display:inline-block; font-family:var(--mono); font-size:10px;
+    letter-spacing:.12em; text-transform:uppercase; font-weight:500;
+    padding:3px 7px; border-radius:3px; margin-bottom:7px;
+  }
+  .t-clear{background:var(--clear-bg); color:var(--clear)}
+  .t-caution{background:var(--caution-bg); color:var(--caution)}
+  .t-suspicious{background:var(--suspicious-bg); color:var(--suspicious)}
+  .t-dangerous{background:var(--dangerous-bg); color:var(--dangerous)}
+  .headline{font-size:13.5px; font-weight:600; line-height:1.4; margin:0 0 5px}
+  .advice{font-size:12.5px; color:var(--text-2); line-height:1.55; margin:0}
+
+  .block-head{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:11px 14px 6px; border-top:1px solid var(--line-soft);
+  }
+  .block-head h4{
+    margin:0; font-size:10.5px; font-weight:600; letter-spacing:.1em;
+    text-transform:uppercase; color:#434a52;
+  }
+  .block-head span{font-family:var(--mono); font-size:10px; color:var(--text-3)}
+
+  .sig{display:flex; gap:10px; padding:8px 14px}
+  .sig + .sig{border-top:1px solid var(--line-soft)}
+  .kind{
+    flex:none; width:38px; padding-top:1px;
+    font-family:var(--mono); font-size:9px; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--text-3);
+  }
+  .kind.rule{color:var(--dangerous)}
+  .sig-main{flex:1; min-width:0}
+  .sig-text{font-size:12.5px; line-height:1.45}
+  .bar{height:3px; background:var(--line-soft); border-radius:2px; margin-top:6px; overflow:hidden}
+  .bar i{display:block; height:100%; background:#99a1a9}
+  .sig.is-rule .bar i{background:var(--dangerous); opacity:.65}
+
+  .mitigating{padding:10px 14px 12px; border-top:1px solid var(--line-soft); background:#fbfbfc}
+  .mitigating h4{
+    margin:0 0 5px; font-size:10.5px; font-weight:600; letter-spacing:.1em;
+    text-transform:uppercase; color:#434a52;
+  }
+  .mitigating p{margin:0; font-size:12px; color:var(--text-2); line-height:1.5}
+
+  .panel-foot{
+    display:flex; align-items:center; gap:10px;
+    padding:9px 14px; border-top:1px solid var(--line-soft);
+    font-family:var(--mono); font-size:10px; color:var(--text-3);
+  }
+  .btn{
+    margin-left:auto; font-family:var(--sans); font-size:11.5px; color:#434a52;
+    border:1px solid #d8dbdf; background:#fff; padding:4px 10px; border-radius:4px;
+  }
+
+  /* -------------------------------------------------------- tier rows -- */
+  .tier-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(236px,1fr)); gap:16px}
+  .tier-item{border:1px solid var(--line); border-radius:6px; background:#fff; overflow:hidden}
+  .tier-item .verdict{padding:13px 13px 13px}
+  .tier-item .dial{width:50px; height:50px}
+  .tier-item .dial .num{font-size:17px}
+  .tier-item .headline{font-size:12.5px}
+  .tier-item .advice{font-size:11.5px}
+  .tier-foot{
+    font-family:var(--mono); font-size:10px; color:var(--text-3);
+    padding:8px 13px; border-top:1px solid var(--line-soft); background:#fbfbfc;
+  }
+
+  /* ------------------------------------------------------- state grid -- */
+  .state-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:20px}
+  .state .panel{max-width:none}
+  .state .cap{margin-top:8px}
+  .skel{height:9px; border-radius:3px; background:#eef0f2}
+  .msg-line{font-size:12.5px; line-height:1.55; color:var(--text-2); margin:8px 0 0}
+  .state-title{font-size:13px; font-weight:600; margin:0}
+
+  /* -------------------------------------------------------- dashboard -- */
+  .dash{background:#fff; border:1px solid var(--line); border-radius:6px; overflow:hidden}
+  .dash-head{
+    display:flex; align-items:center; gap:9px;
+    padding:12px 18px; border-bottom:1px solid var(--line);
+  }
+  .tabs{margin-left:auto; display:flex; gap:20px; font-size:12.5px; color:var(--text-3)}
+  .tabs .on{color:var(--text); font-weight:600; box-shadow:inset 0 -2px 0 var(--text); padding-bottom:3px}
+  .metrics{display:grid; grid-template-columns:repeat(4,1fr); border-bottom:1px solid var(--line)}
+  .metric{padding:15px 18px; border-right:1px solid var(--line-soft)}
+  .metric:last-child{border-right:0}
+  .metric .k{
+    font-family:var(--mono); font-size:9.5px; letter-spacing:.11em;
+    text-transform:uppercase; color:var(--text-3);
+  }
+  .metric .v{font-size:24px; font-weight:600; letter-spacing:-.02em; margin-top:6px}
+  .metric .d{font-size:11.5px; color:var(--text-3); margin-top:3px}
+  table{width:100%; border-collapse:collapse}
+  th{
+    text-align:left; font-family:var(--mono); font-size:9.5px; font-weight:500;
+    letter-spacing:.11em; text-transform:uppercase; color:var(--text-3);
+    padding:10px 18px; border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 18px; border-bottom:1px solid var(--line-soft); font-size:12.5px}
+  td.mono{font-family:var(--mono); font-size:11px; color:var(--text-2)}
+  .pill{
+    display:inline-block; font-family:var(--mono); font-size:9.5px; font-weight:500;
+    letter-spacing:.1em; text-transform:uppercase; padding:2px 6px; border-radius:3px;
+  }
+  .disputed{color:var(--dangerous); font-size:11px; font-family:var(--mono)}
+
+  /* ------------------------------------------------------------ notes -- */
+  .notes{border-left:2px solid var(--text); padding:2px 0 2px 16px; max-width:76ch}
+  .notes p{font-size:13px; line-height:1.65; color:var(--text-2); margin:0 0 12px}
+  .notes p:last-child{margin-bottom:0}
+  .notes b{color:var(--text); font-weight:600}
+  code{font-family:var(--mono); font-size:11.5px; background:#eef0f2; padding:1px 4px; border-radius:3px}
+
+  footer{
+    margin-top:56px; padding-top:14px; border-top:1px solid var(--line);
+    font-family:var(--mono); font-size:11px; color:var(--text-3); line-height:1.8;
+  }
+
+  @media (max-width:720px){
+    body{padding:24px 14px 60px}
+    .metrics{grid-template-columns:repeat(2,1fr)}
+    .mail-subject{font-size:17px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="doc-head">
+    <h1>PhishLens — interface mockups</h1>
+    <div class="meta">
+      Task <b>A-19</b> · builds <b>WBS 4.3</b> (panel), <b>4.4</b> (feedback), <b>4.5</b> (dashboard)<br>
+      Drawn against <b>03_Backend/API_CONTRACT.md</b> v0.3.0 · 2026-11-02<br>
+      Divergence from the implemented interface is recorded in <b>A-20</b>
+    </div>
+  </div>
+
+  <!-- ============================================================= 1 ==== -->
+  <section>
+    <div class="sec-label">1 — Panel in place</div>
+    <h2>Dangerous verdict, as it appears in the open message</h2>
+    <p class="sub">
+      The panel is injected above the message body inside a shadow root. Every value shown comes from
+      one <code>/scan</code> response; nothing is computed in the browser.
+    </p>
+
+    <div class="mail">
+      <div class="mail-chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span>&nbsp;mail client — inbox</div>
+      <div class="mail-subject">Your account verification has not yet been completed</div>
+      <div class="mail-from">
+        <div class="avatar">L</div>
+        <div class="from-lines">
+          <div><b>LEDGER</b></div>
+          <div class="addr">no-reply@notification.example-wallet.so</div>
+        </div>
+      </div>
+
+      <div class="panel-slot">
+        <div class="panel">
+          <div class="panel-head">
+            <svg class="mark" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="6.6" cy="6.6" r="4.7" fill="none" stroke="#1f2328" stroke-width="1.5"/>
+              <path d="M10.2 10.2 L14 14" stroke="#1f2328" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span class="wordmark">PhishLens</span>
+            <span class="right">v0.1.0</span>
+          </div>
+
+          <div class="verdict">
+            <div class="dial">
+              <svg viewBox="0 0 58 58" aria-hidden="true">
+                <circle cx="29" cy="29" r="24.5" fill="none" stroke="#eef0f2" stroke-width="5"/>
+                <circle cx="29" cy="29" r="24.5" fill="none" stroke="#9c2d24" stroke-width="5"
+                        stroke-linecap="round" stroke-dasharray="153.9" stroke-dashoffset="32.3"
+                        transform="rotate(-90 29 29)"/>
+              </svg>
+              <div class="num">79</div>
+            </div>
+            <div>
+              <span class="tier t-dangerous">Dangerous</span>
+              <p class="headline">This message asks you to confirm a password on a lookalike domain.</p>
+              <p class="advice">Do not use the link. If you have a Ledger account, open their site yourself and check there.</p>
+            </div>
+          </div>
+
+          <div class="block-head"><h4>Why this score</h4><span>6 of 43 signals</span></div>
+
+          <div class="sig is-rule">
+            <div class="kind rule">Rule</div>
+            <div class="sig-main">
+              <div class="sig-text">Link text reads <b>ledger.com</b> but points to <b>secure-login.example-wallet.so</b>.</div>
+              <div class="bar"><i style="width:100%"></i></div>
+            </div>
+          </div>
+          <div class="sig">
+            <div class="kind">Model</div>
+            <div class="sig-main">
+              <div class="sig-text">Asks for a password or verification code.</div>
+              <div class="bar"><i style="width:71%"></i></div>
+            </div>
+          </div>
+          <div class="sig">
+            <div class="kind">Model</div>
+            <div class="sig-main">
+              <div class="sig-text">Sender domain was first seen 9 days ago.</div>
+              <div class="bar"><i style="width:58%"></i></div>
+            </div>
+          </div>
+          <div class="sig">
+            <div class="kind">Model</div>
+            <div class="sig-main">
+              <div class="sig-text">Threatens that the account will be suspended.</div>
+              <div class="bar"><i style="width:44%"></i></div>
+            </div>
+          </div>
+          <div class="sig">
+            <div class="kind">Model</div>
+            <div class="sig-main">
+              <div class="sig-text">Greets you as “Dear Users” rather than by name.</div>
+              <div class="bar"><i style="width:26%"></i></div>
+            </div>
+          </div>
+          <div class="sig">
+            <div class="kind">Model</div>
+            <div class="sig-main">
+              <div class="sig-text">Reply-to address differs from the sender address.</div>
+              <div class="bar"><i style="width:19%"></i></div>
+            </div>
+          </div>
+
+          <div class="mitigating">
+            <h4>Pointing the other way</h4>
+            <p>No attachments, and the message is plain text with a single link — both more common in legitimate mail.</p>
+          </div>
+
+          <div class="panel-foot">
+            <span>scored in 180 ms</span>
+            <button class="btn">This looks wrong</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mail-body">
+        <p>Dear Users,</p>
+        <p>We are reaching out about an essential security update regarding your Wallet. Verify your
+           account now or it will be suspended. Confirm your password at the link below.</p>
+        <p><a href="#">https://www.ledger.com/wallet/device-verify</a></p>
+      </div>
+    </div>
+
+    <div class="cap">
+      Rule signals rank above model signals. Bar width is the <code>share</code> field, unmodified.
+      Six shown; the remaining 37 stay in the database for the dashboard.
+    </div>
+  </section>
+
+  <!-- ============================================================= 2 ==== -->
+  <section>
+    <div class="sec-label">2 — Severity tiers</div>
+    <h2>The same panel at each tier</h2>
+    <p class="sub">
+      Tier comes from the response, not from the score in the browser. The rule layer can raise a tier
+      but never lower one; when it does, <code>severity_floored_by</code> names the rule and that rule
+      is listed first.
+    </p>
+
+    <div class="tier-grid">
+      <div class="tier-item">
+        <div class="verdict">
+          <div class="dial">
+            <svg viewBox="0 0 58 58" aria-hidden="true">
+              <circle cx="29" cy="29" r="24.5" fill="none" stroke="#eef0f2" stroke-width="5"/>
+              <circle cx="29" cy="29" r="24.5" fill="none" stroke="#2e6b41" stroke-width="5"
+                      stroke-linecap="round" stroke-dasharray="153.9" stroke-dashoffset="141.6"
+                      transform="rotate(-90 29 29)"/>
+            </svg>
+            <div class="num">8</div>
+          </div>
+          <div>
+            <span class="tier t-clear">Clear</span>
+            <p class="headline">Nothing unusual found.</p>
+          </div>
+        </div>
+        <div class="tier-foot">0–24 · collapsed to one line</div>
+      </div>
+
+      <div class="tier-item">
+        <div class="verdict">
+          <div class="dial">
+            <svg viewBox="0 0 58 58" aria-hidden="true">
+              <circle cx="29" cy="29" r="24.5" fill="none" stroke="#eef0f2" stroke-width="5"/>
+              <circle cx="29" cy="29" r="24.5" fill="none" stroke="#8a6a12" stroke-width="5"
+                      stroke-linecap="round" stroke-dasharray="153.9" stroke-dashoffset="106.2"
+                      transform="rotate(-90 29 29)"/>
+            </svg>
+            <div class="num">31</div>
+          </div>
+          <div>
+            <span class="tier t-caution">Caution</span>
+            <p class="headline">Bulk mail with no personal greeting.</p>
+            <p class="advice">Signals listed, no warning language.</p>
+          </div>
+        </div>
+        <div class="tier-foot">25–49 · signals shown, tone neutral</div>
+      </div>
+
+      <div class="tier-item">
+        <div class="verdict">
+          <div class="dial">
+            <svg viewBox="0 0 58 58" aria-hidden="true">
+              <circle cx="29" cy="29" r="24.5" fill="none" stroke="#eef0f2" stroke-width="5"/>
+              <circle cx="29" cy="29" r="24.5" fill="none" stroke="#a1521a" stroke-width="5"
+                      stroke-linecap="round" stroke-dasharray="153.9" stroke-dashoffset="56.9"
+                      transform="rotate(-90 29 29)"/>
+            </svg>
+            <div class="num">63</div>
+          </div>
+          <div>
+            <span class="tier t-suspicious">Suspicious</span>
+            <p class="headline">Sender domain was registered this month.</p>
+            <p class="advice">Headline names the strongest single signal.</p>
+          </div>
+        </div>
+        <div class="tier-foot">50–74 · specific advice, not “be careful”</div>
+      </div>
+
+      <div class="tier-item">
+        <div class="verdict">
+          <div class="dial">
+            <svg viewBox="0 0 58 58" aria-hidden="true">
+              <circle cx="29" cy="29" r="24.5" fill="none" stroke="#eef0f2" stroke-width="5"/>
+              <circle cx="29" cy="29" r="24.5" fill="none" stroke="#9c2d24" stroke-width="5"
+                      stroke-linecap="round" stroke-dasharray="153.9" stroke-dashoffset="32.3"
+                      transform="rotate(-90 29 29)"/>
+            </svg>
+            <div class="num">79</div>
+          </div>
+          <div>
+            <span class="tier t-dangerous">Dangerous</span>
+            <p class="headline">Asks you to confirm a password on a lookalike domain.</p>
+            <p class="advice">Full panel, link highlighted in the body.</p>
+          </div>
+        </div>
+        <div class="tier-foot">75–100 · never blocks, the user decides</div>
+      </div>
+    </div>
+
+    <div class="cap">
+      Thresholds live in <code>model_versions.severity_tiers</code>, not in the extension — WBS 2.4 recalibrates them.
+    </div>
+  </section>
+
+  <!-- ============================================================= 3 ==== -->
+  <section>
+    <div class="sec-label">3 — States that are not a verdict</div>
+    <h2>Four of the six contract statuses</h2>
+    <p class="sub">
+      These are what the IM2 demo hits when anything is half-configured, so they are drawn at the same
+      fidelity as the happy path.
+    </p>
+
+    <div class="state-grid">
+      <div class="state">
+        <div class="panel">
+          <div class="panel-head">
+            <svg class="mark" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="6.6" cy="6.6" r="4.7" fill="none" stroke="#1f2328" stroke-width="1.5"/>
+              <path d="M10.2 10.2 L14 14" stroke="#1f2328" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span class="wordmark">PhishLens</span>
+            <span class="right">scoring…</span>
+          </div>
+          <div class="verdict">
+            <div class="skel" style="width:58px; height:58px; border-radius:50%; flex:none"></div>
+            <div style="flex:1">
+              <div class="skel" style="width:40%"></div>
+              <div class="skel" style="width:85%; margin-top:9px"></div>
+              <div class="skel" style="width:66%; margin-top:7px"></div>
+            </div>
+          </div>
+        </div>
+        <div class="cap">Request in flight. The panel's own shape fills in — no spinner.</div>
+      </div>
+
+      <div class="state">
+        <div class="panel">
+          <div class="panel-head">
+            <svg class="mark" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="6.6" cy="6.6" r="4.7" fill="none" stroke="#1f2328" stroke-width="1.5"/>
+              <path d="M10.2 10.2 L14 14" stroke="#1f2328" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span class="wordmark">PhishLens</span>
+          </div>
+          <div class="verdict">
+            <div class="dial">
+              <svg viewBox="0 0 58 58" aria-hidden="true">
+                <circle cx="29" cy="29" r="24.5" fill="none" stroke="#eef0f2" stroke-width="5"/>
+                <circle cx="29" cy="29" r="24.5" fill="none" stroke="#a1521a" stroke-width="5"
+                        stroke-linecap="round" stroke-dasharray="153.9" stroke-dashoffset="56.9"
+                        transform="rotate(-90 29 29)"/>
+              </svg>
+              <div class="num">63</div>
+            </div>
+            <div>
+              <span class="tier t-suspicious">Suspicious</span>
+              <p class="headline">Sender domain was registered this month.</p>
+              <p class="advice">Verdict and signals exactly as normal.</p>
+            </div>
+          </div>
+          <div class="panel-foot"><span>scored in 174 ms · not recorded</span></div>
+        </div>
+        <div class="cap"><code>persisted:false</code> — feedback button hidden, nothing else changes.</div>
+      </div>
+
+      <div class="state">
+        <div class="panel">
+          <div class="panel-head">
+            <svg class="mark" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="6.6" cy="6.6" r="4.7" fill="none" stroke="#1f2328" stroke-width="1.5"/>
+              <path d="M10.2 10.2 L14 14" stroke="#1f2328" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span class="wordmark">PhishLens</span>
+          </div>
+          <div style="padding:14px">
+            <p class="state-title">Too many messages scanned at once</p>
+            <p class="msg-line">Checking will start again in about a minute. Your mail is unaffected.</p>
+          </div>
+        </div>
+        <div class="cap">429 — waits out <code>Retry-After</code>; no retry timer.</div>
+      </div>
+
+      <div class="state">
+        <div class="panel">
+          <div class="panel-head">
+            <svg class="mark" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="6.6" cy="6.6" r="4.7" fill="none" stroke="#1f2328" stroke-width="1.5"/>
+              <path d="M10.2 10.2 L14 14" stroke="#1f2328" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span class="wordmark">PhishLens</span>
+          </div>
+          <div style="padding:14px">
+            <p class="state-title">Can’t check this message right now</p>
+            <p class="msg-line">Judge it yourself: check the sender’s address, and don’t enter a password from a link in an email.</p>
+          </div>
+        </div>
+        <div class="cap">503 or offline — never implies the message is safe.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================= 4 ==== -->
+  <section>
+    <div class="sec-label">4 — Feedback control</div>
+    <h2>WBS 4.4, after “This looks wrong”</h2>
+    <p class="sub">
+      Two choices and an optional note, posted to <code>/feedback</code> with the install token. The
+      control does not appear when <code>scan_id</code> is null.
+    </p>
+
+    <div style="max-width:372px">
+      <div class="panel">
+        <div class="panel-head">
+          <svg class="mark" viewBox="0 0 16 16" aria-hidden="true">
+            <circle cx="6.6" cy="6.6" r="4.7" fill="none" stroke="#1f2328" stroke-width="1.5"/>
+            <path d="M10.2 10.2 L14 14" stroke="#1f2328" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <span class="wordmark">PhishLens</span>
+          <span class="right">scan 10428</span>
+        </div>
+        <div style="padding:14px">
+          <p class="state-title">What did it get wrong?</p>
+          <div style="display:flex; gap:8px; margin:11px 0 10px">
+            <button class="btn" style="margin:0; flex:1">This is safe</button>
+            <button class="btn" style="margin:0; flex:1">This is phishing</button>
+          </div>
+          <div style="border:1px solid #d8dbdf; border-radius:4px; padding:8px 10px; font-size:12px; color:var(--text-3)">
+            Add a note (optional, 500 characters)
+          </div>
+          <p class="msg-line" style="font-size:11.5px">
+            Feedback is reviewed by a person. It is never applied to the model automatically.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cap">
+      “This is safe” sends <code>false_positive</code>, “This is phishing” sends <code>false_negative</code>.
+      409 on a repeat submission is treated as success.
+    </div>
+  </section>
+
+  <!-- ============================================================= 5 ==== -->
+  <section>
+    <div class="sec-label">5 — Web dashboard</div>
+    <h2>WBS 4.5</h2>
+    <p class="sub">
+      Scan history for one install, a review queue for disagreements, and model performance. Precision,
+      recall and false-positive rate — accuracy is not reported anywhere, because on a corpus this
+      unbalanced it would flatter the model.
+    </p>
+
+    <div class="dash">
+      <div class="dash-head">
+        <svg class="mark" viewBox="0 0 16 16" aria-hidden="true">
+          <circle cx="6.6" cy="6.6" r="4.7" fill="none" stroke="#1f2328" stroke-width="1.5"/>
+          <path d="M10.2 10.2 L14 14" stroke="#1f2328" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <span class="wordmark" style="font-size:13px">PhishLens</span>
+        <nav class="tabs"><span class="on">History</span><span>Feedback</span><span>Model</span></nav>
+      </div>
+
+      <div class="metrics">
+        <div class="metric"><div class="k">Precision</div><div class="v">0.94</div><div class="d">held-out split</div></div>
+        <div class="metric"><div class="k">Recall</div><div class="v">0.89</div><div class="d">held-out split</div></div>
+        <div class="metric"><div class="k">False positive rate</div><div class="v">0.021</div><div class="d">decides adoption</div></div>
+        <div class="metric"><div class="k">Open disagreements</div><div class="v">3</div><div class="d">awaiting review</div></div>
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>Scored</th><th>Severity</th><th>Score</th><th>Top signal</th><th>Model</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">11:04:22</td>
+            <td><span class="pill t-dangerous">Dangerous</span></td>
+            <td class="mono">79</td>
+            <td>Link text and destination disagree <span class="disputed">· disputed</span></td>
+            <td class="mono">full · v4</td>
+          </tr>
+          <tr>
+            <td class="mono">10:51:09</td>
+            <td><span class="pill t-caution">Caution</span></td>
+            <td class="mono">31</td>
+            <td>Bulk sender, no personal greeting</td>
+            <td class="mono">full · v4</td>
+          </tr>
+          <tr>
+            <td class="mono">10:47:55</td>
+            <td><span class="pill t-clear">Clear</span></td>
+            <td class="mono">8</td>
+            <td>—</td>
+            <td class="mono">full · v4</td>
+          </tr>
+          <tr>
+            <td class="mono">09:38:41</td>
+            <td><span class="pill t-suspicious">Suspicious</span></td>
+            <td class="mono">63</td>
+            <td>Sender domain registered this month</td>
+            <td class="mono">full · v4</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cap">
+      No subject lines, sender addresses or bodies — the database never held them. A row is a
+      measurement and a verdict.
+    </div>
+  </section>
+
+  <!-- ============================================================= 6 ==== -->
+  <section>
+    <div class="sec-label">6 — Open before build</div>
+    <h2>Decisions these mockups do not settle</h2>
+    <div class="notes">
+      <p><b>Panel placement.</b> Above the message body, as drawn, or floating at the right? Above
+         survives Gmail markup changes better; floating is harder to miss. Decide in 4.3 against the
+         real DOM.</p>
+      <p><b>Clear tier.</b> Collapsed one-liner, as drawn, or nothing at all? A panel that says “fine”
+         on every message gets ignored — and then it is ignored on the one that matters.</p>
+      <p><b>Dashboard authentication.</b> An install token in a URL is not a login. Likely a read-only
+         view scoped to the install, using the token the extension already holds. Needs deciding before 4.5.</p>
+    </div>
+  </section>
+
+  <footer>
+    PhishLens · CYBR 498W · Connor Schell<br>
+    A-19 rev 2 · 2026-11-02 · for review, not implemented
+  </footer>
+
+</div>
+</body>
+</html>

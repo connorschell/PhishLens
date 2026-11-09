@@ -1,0 +1,17 @@
+/* WBS 4.1 - mount styles only.
+ *
+ * The panel itself lives in a shadow root (content/gmail.js) and is styled in
+ * WBS 4.3. What belongs here is the one rule Gmail needs to honour: the host
+ * element participates in Gmail's layout, so it is given block flow and
+ * spacing, and nothing else. Styling the panel from this sheet would defeat
+ * the shadow boundary that keeps Gmail's CSS out.
+ */
+
+#phishlens-panel-host {
+  display: block;
+  margin: 12px 0;
+  /* Gmail raises stacking contexts freely; the panel must sit above the
+     message body but below Gmail's own dialogs and menus. */
+  position: relative;
+  z-index: 1;
+}

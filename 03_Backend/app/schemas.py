@@ -73,3 +73,34 @@ class HealthResponse(BaseModel):
     model_variant: str | None = None
     model_trained_utc: str | None = None
     database: str
+
+
+# --------------------------------------------------------------- WBS 3.4 --
+
+class RegisterRequest(BaseModel):
+    """First-run call from the extension's service worker (A-02)."""
+
+    extension_version: str = Field(default="0.0.0", max_length=50)
+    client_platform: str = Field(default="chrome", max_length=30)
+
+
+class RegisterResponse(BaseModel):
+    install_id: str
+    token: str = Field(description="Returned once and never again; only its hash is stored.")
+    issued_at: str
+
+
+class FeedbackRequest(BaseModel):
+    """A user disagreeing with a verdict (WBS 4.4 control posts this)."""
+
+    scan_id: int = Field(ge=1)
+    disagreement: str = Field(pattern="^(false_positive|false_negative)$")
+    note: str | None = Field(default=None, max_length=_s.max_feedback_note_chars)
+
+
+class FeedbackResponse(BaseModel):
+    feedback_id: int
+    scan_id: int
+    disagreement: str
+    recorded_at: str
+    note_stored: bool

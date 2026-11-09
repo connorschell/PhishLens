@@ -21,7 +21,12 @@ for p in (ROOT, ROOT / "01_Data" / "src", ROOT / "02_Model"):
 
 from app_import import app, scoring  # noqa: E402  (shim; see conftest.py)
 
-client = TestClient(app)
+# WBS 3.4 made /scan require a per-install token. These tests run without a
+# database, so the token cannot be verified against the installs table; that is
+# the degraded path, in which the message is still scored and nothing is
+# recorded. The unauthenticated case is asserted in test_auth_api.py.
+AUTH = {"Authorization": "Bearer pl_dev_localonly"}
+client = TestClient(app, headers=AUTH)
 
 PHISH = {
     "from_display": "LEDGER",

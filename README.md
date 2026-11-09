@@ -47,9 +47,20 @@ curl http://localhost:8000/health
 docker compose exec api python 03_Backend/db/seed/seed_model_version.py --variant full --activate
 docker compose exec -T db psql -U phishlens -d phishlens < 03_Backend/db/seed/seed_dev_install.sql
 
-curl -X POST http://localhost:8000/scan \\
-  -H 'content-type: application/json' \\
+# every install gets its own token (WBS 3.4); /scan requires one
+TOKEN=$(curl -s -X POST http://localhost:8000/register \
+  -H 'content-type: application/json' \
+  -d '{"extension_version":"0.2.0","client_platform":"chrome"}' \
+  | python -c 'import sys,json;print(json.load(sys.stdin)["token"])')
+
+curl -X POST http://localhost:8000/scan \
+  -H "authorization: Bearer $TOKEN" \
+  -H 'content-type: application/json' \
   -d '{"from_display":"LEDGER","subject":"Verify your account","body_text":"Confirm your password","body_html":"<a href=\"https://x.example\">https://www.ledger.com</a>"}'
+
+# without a token, the same request is rejected
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://localhost:8000/scan \
+  -H 'content-type: application/json' -d '{}'      # 401
 ```
 
 The database schema is created automatically on the first start of the database
@@ -68,6 +79,43 @@ Without Docker:
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+```
+
+## The Chrome extension
+
+Manifest V3, in `04_Extension/`. It reads the open message from the Gmail page,
+sends it to the API, and renders the score, the severity tier and the ranked
+explanation in a panel above the message body.
+
+```
+chrome://extensions  ->  Developer mode  ->  Load unpacked  ->  04_Extension
+```
+
+`config.js` points at `http://localhost:8000` by default. Chrome treats
+`http://localhost` as a trustworthy origin, so the extension works against a
+locally running stack with no certificate; the deployed server requires HTTPS
+and is pending a hostname (WBS 5.2).
+
+| File | Role |
+|---|---|
+| `manifest.json` | Permissions, content-script registration, CSP |
+| `config.js` | API address, storage keys, timeouts, backoff — the only constants |
+| `background/service_worker.js` | Registration, token custody, every API call |
+| `content/parse.js` | Reads the message out of the Gmail DOM (the fragile file) |
+| `content/panel.js` | Renders the verdict and every non-verdict state |
+| `content/gmail.js` | Decides when to scan; mounts and tears down the panel |
+
+The install token never reaches the content script. The content script posts a
+message to the service worker, the worker attaches `Authorization: Bearer`, and
+only the panel data comes back — so the code running inside Google's page never
+holds the credential.
+
+Endpoint reference: `03_Backend/API_CONTRACT.md` and `03_Backend/openapi.json`.
+
+## Tests
+
+```bash
+python -m pytest 01_Data 02_Model 03_Backend      # 94 tests
 ```
 
 ## Data

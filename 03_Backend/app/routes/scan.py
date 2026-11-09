@@ -1,22 +1,30 @@
-"""WBS 3.3 - POST /scan.
+"""WBS 3.3 - POST /scan, with WBS 3.4 authentication and rate limiting.
 
-Scores one message and records the result. Authentication is accepted here but
-not enforced: /register and per-install tokens land in WBS 3.4, and until they
-exist an unauthenticated scan is still scored so the extension work in week six
-is not blocked on it. The hook is in place so turning enforcement on is a
-one-line change rather than a refactor.
+Scores one message and records the result.
+
+Authentication is enforced when settings.require_auth is on (the default). The
+install is resolved before scoring so a revoked or unrecognised token is
+rejected without spending model time on it. The exception is the degraded path:
+the installs table is the token store, so when the database is unreachable the
+server cannot verify a token at all. It scores the message anyway and records
+nothing, because withholding a phishing warning over a database outage is the
+wrong trade, and the per-IP rate limit is what remains in force. app/auth.py
+carries the full note on that choice.
 """
 
 from __future__ import annotations
 
-import hashlib
+import json
 import logging
 import time
 
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 
+from ..auth import Revoked, authorization_header, bearer_token, resolve_install, unauthorized
+from ..config import get_settings
 from ..db import session_scope
+from ..ratelimit import scan_limit
 from ..schemas import ScanRequest, ScanResponse
 from ..services.scoring import ModelUnavailable, score
 
@@ -24,25 +32,38 @@ log = logging.getLogger(__name__)
 router = APIRouter(tags=["scan"])
 
 
-def _install_id(session, authorization: str | None):
-    """Resolve a bearer token to an install, if one was sent and matches."""
-    if not session or not authorization or not authorization.lower().startswith("bearer "):
-        return None
-    token = authorization.split(" ", 1)[1].strip()
-    digest = hashlib.sha256(token.encode("utf-8")).digest()
-    row = session.execute(
-        text("SELECT install_id FROM installs "
-             "WHERE token_hash = :d AND revoked_at IS NULL"),
-        {"d": digest}).first()
-    if row:
-        session.execute(
-            text("UPDATE installs SET last_seen_at = now() WHERE install_id = :i"),
-            {"i": row[0]})
-        return row[0]
-    return None
+def _authenticate(token: str | None) -> tuple[str | None, bool]:
+    """Resolve the caller to an install id.
+
+    Returns (install_id, store_reachable). A false second element means the
+    token store could not be consulted, which is what puts the request on the
+    degraded path rather than producing a 401.
+    """
+    settings = get_settings()
+    if settings.require_auth and not token:
+        raise unauthorized("a per-install token is required; call /register first")
+
+    try:
+        with session_scope() as session:
+            if session is None:
+                return None, False
+            try:
+                install = resolve_install(session, token)
+            except Revoked as exc:
+                raise unauthorized("this install has been revoked") from exc
+            if install is None:
+                if settings.require_auth:
+                    raise unauthorized("unrecognised install token")
+                return None, True
+            return install.install_id, True
+    except HTTPException:
+        raise
+    except Exception:
+        log.warning("token store unreachable; scoring unauthenticated and not recording")
+        return None, False
 
 
-def _persist(result, duration_ms, authorization):
+def _persist(result, duration_ms, install_id):
     """Record the scan. Returns a scan id, or None if nothing was recorded.
 
     A failure here is logged and swallowed: the verdict has already been
@@ -60,7 +81,6 @@ def _persist(result, duration_ms, authorization):
                 log.warning("no active model_version row; scan not recorded")
                 return None
 
-            install_id = _install_id(session, authorization)
             scan_id = session.execute(text("""
                 INSERT INTO scans (install_id, model_version_id, message_fingerprint,
                                    risk_score, probability, severity, features, duration_ms)
@@ -73,7 +93,7 @@ def _persist(result, duration_ms, authorization):
                 "score": panel["risk_score"],
                 "prob": panel["probability"],
                 "sev": panel["severity"],
-                "feats": __import__("json").dumps(result["features"]),
+                "feats": json.dumps(result["features"]),
                 "ms": duration_ms,
             }).scalar_one()
 
@@ -94,8 +114,14 @@ def _persist(result, duration_ms, authorization):
         return None
 
 
-@router.post("/scan", response_model=ScanResponse)
-def scan(req: ScanRequest, authorization: str | None = Header(default=None)) -> ScanResponse:
+@router.post("/scan", response_model=ScanResponse,
+             dependencies=[Depends(scan_limit)])
+def scan(
+    req: ScanRequest,
+    authorization: str | None = Depends(authorization_header),
+) -> ScanResponse:
+    install_id, _store_ok = _authenticate(bearer_token(authorization))
+
     started = time.perf_counter()
     try:
         result = score(req.model_dump())
@@ -104,7 +130,7 @@ def scan(req: ScanRequest, authorization: str | None = Header(default=None)) -> 
 
     duration_ms = int((time.perf_counter() - started) * 1000)
     panel = result["panel"]
-    scan_id = _persist(result, duration_ms, authorization)
+    scan_id = _persist(result, duration_ms, install_id)
 
     return ScanResponse(
         scan_id=scan_id,

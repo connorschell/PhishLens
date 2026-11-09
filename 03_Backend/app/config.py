@@ -30,6 +30,28 @@ class Settings(BaseSettings):
     max_body_html_chars: int = 500_000
     max_attachments: int = 25
 
+    # --- WBS 3.4: authentication and rate limiting -------------------------
+    # Enforce per-install tokens on /scan. On by default: a deployment that
+    # silently accepted anonymous scans because a flag was unset would defeat
+    # the point of A-02. The degraded path (token store unreachable) is handled
+    # in app/auth.py and is a deliberate, documented trade, not this switch.
+    require_auth: bool = True
+
+    # Accepted extension origins for CORS. Empty means same-origin only, which
+    # is what the local test page uses. The published extension id goes here in
+    # the deployed .env as chrome-extension://<id> (WBS 4.1).
+    allowed_origins: list[str] = []
+
+    rate_limit_enabled: bool = True
+    # Per install. Generous: a user reading mail quickly should never see a 429.
+    scan_rate_limit: str = "60/minute"
+    # Per IP. Strict: this is the endpoint that mints identities.
+    register_rate_limit: str = "10/hour"
+    # Per install. Feedback is a review signal; nobody legitimately submits more.
+    feedback_rate_limit: str = "20/hour"
+    # Free-text note length on feedback, mirrored by the schema CHECK.
+    max_feedback_note_chars: int = 500
+
 
 @lru_cache
 def get_settings() -> Settings:
