@@ -81,6 +81,12 @@ var PhishLensPanel = (function () {
     .t { font-size: 13px; font-weight: 600; margin: 0; }
     .m { font-size: 12.5px; line-height: 1.55; color: #5c636b; margin: 8px 0 0; }
     .sk { height: 9px; border-radius: 3px; background: #eef0f2; }
+    textarea.note { width: 100%; margin-top: 10px; padding: 7px 9px; resize: vertical;
+             font: 12px -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #1f2328;
+             border: 1px solid #d8dbdf; border-radius: 4px; background: #fff; }
+    textarea.note:focus { outline: 2px solid #c9ced3; outline-offset: -1px; }
+    textarea.note[disabled] { color: #8b929a; background: #fbfbfc; }
+    .count { font: 10px ui-monospace, Consolas, monospace; color: #8b929a; margin-top: 4px; text-align: right; }
     .collapsed { display: flex; align-items: center; gap: 9px; padding: 10px 14px; }
     .collapsed .tier { margin: 0; }
   `;
@@ -264,31 +270,74 @@ var PhishLensPanel = (function () {
     p.appendChild(foot);
   }
 
-  /** WBS 4.4 - two choices, posted with the install token by the worker. */
+  /**
+   * WBS 4.4 - the feedback control.
+   *
+   * Two choices and an optional note. The note is capped at 500 characters to
+   * match the CHECK constraint on the feedback table, so an over-long note is
+   * refused here rather than bouncing off the database.
+   *
+   * The thank-you is NOT shown optimistically. Telling the user their report
+   * was recorded and then silently dropping it is worse than telling them it
+   * failed: the whole point of the control is that someone will look at what
+   * they sent. So the panel waits for the worker's answer and says which
+   * happened.
+   */
   function feedbackPrompt(root, scan, onFeedback) {
     const p = shell(root);
     header(p, "scan " + scan.scan_id);
     const pad = el("div", "pad");
     pad.appendChild(el("p", "t", "What did it get wrong?"));
+
+    const note = document.createElement("textarea");
+    note.placeholder = "Add a note (optional)";
+    note.maxLength = 500;
+    note.rows = 2;
+    note.className = "note";
+
+    const count = el("div", "count", "0 / 500");
+    note.addEventListener("input", () => {
+      count.textContent = `${note.value.length} / 500`;
+    });
+
     const row = el("div", "row");
+    const safe = el("button", null, "This is safe");
+    const phish = el("button", null, "This is phishing");
 
     const send = (kind) => {
-      const done = shell(root);
-      header(done);
-      const d = el("div", "pad");
-      d.appendChild(el("p", "t", "Thanks — recorded."));
-      d.appendChild(el("p", "m", "A person reviews these. It does not change the model on its own."));
-      done.appendChild(d);
-      onFeedback(scan.scan_id, kind);
+      safe.disabled = true;
+      phish.disabled = true;
+      note.disabled = true;
+      count.textContent = "sending…";
+
+      onFeedback(scan.scan_id, kind, note.value.trim(), (ok, reason) => {
+        const done = shell(root);
+        header(done);
+        const d = el("div", "pad");
+        if (ok) {
+          d.appendChild(el("p", "t", "Thanks — recorded."));
+          d.appendChild(el("p", "m",
+            "A person reviews these. It does not change the model on its own."));
+        } else {
+          d.appendChild(el("p", "t", "That didn’t send"));
+          d.appendChild(el("p", "m",
+            reason === "rate_limited"
+              ? "Too many reports in a short time. Try again later."
+              : "PhishLens couldn’t reach the service. Your report wasn’t recorded."));
+          const retry = el("button", null, "Try again");
+          retry.style.marginTop = "10px";
+          retry.addEventListener("click", () => feedbackPrompt(root, scan, onFeedback));
+          d.appendChild(retry);
+        }
+        done.appendChild(d);
+      });
     };
 
-    const safe = el("button", null, "This is safe");
     safe.addEventListener("click", () => send("false_positive"));
-    const phish = el("button", null, "This is phishing");
     phish.addEventListener("click", () => send("false_negative"));
 
     row.append(safe, phish);
-    pad.appendChild(row);
+    pad.append(row, note, count);
     p.appendChild(pad);
   }
 

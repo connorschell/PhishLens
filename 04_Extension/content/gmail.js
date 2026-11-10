@@ -42,14 +42,24 @@
     currentKey = null;
   }
 
-  function sendFeedback(scanId, disagreement) {
+  /**
+   * WBS 4.4 - hand the report to the worker and tell the panel what happened.
+   *
+   * The result is reported back rather than swallowed. A user who was told
+   * their report was recorded, when it was not, has been lied to about the one
+   * thing the control promises.
+   */
+  function sendFeedback(scanId, disagreement, note, done) {
     chrome.runtime.sendMessage(
-      { type: "FEEDBACK", payload: { scan_id: scanId, disagreement } },
+      { type: "FEEDBACK", payload: { scan_id: scanId, disagreement, note: note || null } },
       (res) => {
-        // Deliberately quiet. The panel has already thanked the user; a late
-        // error here would contradict what they were just told, and the
-        // submission is a review signal, not something they are waiting on.
-        if (!res?.ok) console.warn("[PhishLens] feedback not recorded:", res?.reason);
+        if (chrome.runtime.lastError || !res?.ok) {
+          const reason = res?.reason || "offline";
+          console.warn("[PhishLens] feedback not recorded:", reason);
+          done(false, reason);
+          return;
+        }
+        done(true);
       },
     );
   }

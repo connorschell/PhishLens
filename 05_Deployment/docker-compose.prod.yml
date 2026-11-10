@@ -1,0 +1,31 @@
+# PhishLens production overlay - WBS 5.2.
+#
+# Used with the repository compose file, not instead of it:
+#
+#   docker compose -f docker-compose.yml -f 05_Deployment/docker-compose.prod.yml up -d
+#
+# The base file publishes the API on 127.0.0.1:8000 only. Nothing here republishes
+# it: Nginx is the only public entrance, and the application is never directly
+# reachable from outside the droplet.
+services:
+  api:
+    # --proxy-headers makes uvicorn read X-Forwarded-For, so request.client.host
+    # inside the application is the real caller rather than the proxy. Without
+    # it the per-IP limit on /register (10/hour) applies to every caller at once
+    # instead of per source address, which would defeat the A-02 control.
+    #
+    # --forwarded-allow-ips=* is safe here *because* port 8000 is published on
+    # the loopback interface only: the sole route to this container is from the
+    # host itself, so the only process able to set those headers is Nginx. If
+    # that port is ever published more widely this must become an explicit
+    # address list, or the header becomes trivially spoofable.
+    command:
+      - uvicorn
+      - 03_Backend.app.main:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8000"
+      - --proxy-headers
+      - --forwarded-allow-ips
+      - "*"

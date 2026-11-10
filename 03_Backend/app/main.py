@@ -13,6 +13,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+from . import __version__
 from .config import get_settings
 from .routes import feedback, health, register, scan
 
@@ -22,7 +23,7 @@ logging.basicConfig(level=settings.log_level)
 app = FastAPI(
     title="PhishLens API",
     description="Explainable phishing detection for the Gmail web client.",
-    version="0.3.0",
+    version=__version__,
 )
 
 # Rate limiting is per route, as a dependency; see app/ratelimit.py for the

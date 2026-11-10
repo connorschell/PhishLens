@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from .. import __version__
 from ..db import database_ok
 from ..schemas import HealthResponse
 from ..services.scoring import ModelUnavailable, get_bundle
@@ -26,7 +27,7 @@ def health() -> HealthResponse:
     ok, detail = database_ok()
     return HealthResponse(
         status="ok" if loaded else "degraded",
-        version="0.2.0",
+        version=__version__,
         model_loaded=loaded,
         model_variant=variant,
         model_trained_utc=trained,

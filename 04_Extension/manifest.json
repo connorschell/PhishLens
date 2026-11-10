@@ -9,7 +9,7 @@
   ],
   "host_permissions": [
     "http://localhost:8000/*",
-    "https://api.phishlens.invalid/*"
+    "https://api.usephishlens.app/*"
   ],
   "background": {
     "service_worker": "background/service_worker.js",

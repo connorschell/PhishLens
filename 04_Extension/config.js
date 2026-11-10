@@ -1,34 +1,35 @@
 /**
  * WBS 4.1 - build constants.
  *
- * API_BASE is deliberately a .invalid hostname. That TLD can never resolve, so
- * a build that was never pointed at the real API fails loudly in development
- * instead of quietly shipping a broken or wrong host. Claiming the domain is
- * A-17 item 3; when it exists, this constant and the host_permissions entry in
- * manifest.json are the only two places that change, and they must match.
+ * The hostname exists as of 11/10: api.usephishlens.app, behind Nginx with a
+ * Let's Encrypt certificate (WBS 5.2). API_BASE and the host_permissions entry
+ * in manifest.json must always name the same origin.
  *
- * The droplet's bare IP is not an option: Let's Encrypt will not issue for an
- * IP address, and the extension must not talk to the API over plain HTTP.
+ * The droplet's bare IP was never an option: Let's Encrypt will not issue for
+ * an IP address, and the extension must not talk to the API over plain HTTP.
  */
 
 /**
  * Where the API lives.
  *
- * localhost is deliberate for the IM2 demo, and it is not a shortcut around
- * TLS. Chrome treats http://localhost as a trustworthy origin - it is the one
- * plain-HTTP address that is not downgraded - because nothing leaves the
- * machine. So the extension can talk to a locally running stack with no
- * certificate at all, while the deployed server still requires HTTPS and
- * still needs the hostname that WBS 5.2 is blocked on.
+ * Points at the deployed server as of 11/10. host_permissions in manifest.json
+ * still lists http://localhost:8000 as well, so falling back to a local stack
+ * is a one-line change here and needs no manifest edit - which matters if the
+ * droplet or the network is unavailable during a demo.
  *
- * Swap API_BASE to the deployed hostname once it exists. host_permissions in
- * manifest.json lists both; the unused one costs nothing and keeps the switch
- * to one line here.
+ * Chrome treats http://localhost as a trustworthy origin, so the local option
+ * works with no certificate. Any other plain-HTTP origin would be blocked, and
+ * should be.
  */
-export const API_BASE = "http://localhost:8000";
+/** The deployed API: Nginx + Let's Encrypt on the droplet (WBS 5.2). */
+export const API_BASE_DEPLOYED = "https://api.usephishlens.app";
 
-/** The deployed address, once WBS 5.2 is unblocked (A-17 item 3). */
-export const API_BASE_DEPLOYED = "https://api.phishlens.invalid";
+/** The local stack, for development and as a demo fallback. */
+export const API_BASE_LOCAL = "http://localhost:8000";
+
+/** Declared after both, not before: `const` is not hoisted, so naming
+ *  API_BASE_DEPLOYED above this line would throw at module load. */
+export const API_BASE = API_BASE_DEPLOYED;
 
 export const HOSTNAME_PENDING = API_BASE.endsWith(".invalid");
 
