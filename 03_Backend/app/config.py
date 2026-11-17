@@ -42,6 +42,23 @@ class Settings(BaseSettings):
     # the deployed .env as chrome-extension://<id> (WBS 4.1).
     allowed_origins: list[str] = []
 
+    # Key for the per-install token scheme and the dashboard session MAC. Empty
+    # or left at the template placeholder disables the dashboard (app/
+    # admin_auth.py) rather than signing sessions with a known value.
+    token_signing_secret: str = ""
+
+    # --- WBS 4.5: operator dashboard ---------------------------------------
+    # Single operator password. Empty means the dashboard cannot issue a
+    # session and every route under it returns 503. Fail-closed on purpose: an
+    # unconfigured dashboard that refuses to work is a visible problem, an
+    # unconfigured dashboard serving scan history to anyone is not.
+    dashboard_password: str = ""
+    dashboard_session_hours: int = 12
+    # Per IP. Strict, because this is the only endpoint that takes a password.
+    dashboard_login_rate_limit: str = "10/hour"
+    # Page size cap for the history view; bounds the response and the query.
+    dashboard_page_size: int = 50
+
     rate_limit_enabled: bool = True
     # Per install. Generous: a user reading mail quickly should never see a 429.
     scan_rate_limit: str = "60/minute"

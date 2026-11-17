@@ -104,3 +104,89 @@ class FeedbackResponse(BaseModel):
     disagreement: str
     recorded_at: str
     note_stored: bool
+
+
+# --------------------------------------------------------------- WBS 4.5 --
+# Operator dashboard. Note what is absent from every shape below: there is no
+# subject, body, sender or install token, because the database holds none of
+# them (03_Backend/db/schema.sql). The dashboard can only ever show
+# measurements, scores and explanations, which is the privacy claim made in the
+# proposal holding at the presentation layer too.
+
+
+class DashboardLoginRequest(BaseModel):
+    password: str = Field(max_length=200)
+
+
+class DashboardLoginResponse(BaseModel):
+    token: str = Field(description="Short-lived signed session token; send as Bearer.")
+    expires_at: str
+
+
+class ScanSummary(BaseModel):
+    scan_id: int
+    scored_at: str
+    risk_score: int
+    severity: str
+    model_variant: str
+    duration_ms: int | None = None
+    install_id_short: str | None = Field(
+        default=None,
+        description="First 8 characters of the install uuid; enough to group, "
+                    "not enough to identify. Null for degraded-path scans.")
+    top_signal: str | None = None
+    has_feedback: bool = False
+
+
+class ScanListResponse(BaseModel):
+    scans: list[ScanSummary]
+    total: int
+    page: int
+    page_size: int
+
+
+class FeedbackItem(BaseModel):
+    feedback_id: int
+    scan_id: int
+    disagreement: str
+    note: str | None = None
+    created_at: str
+    reviewed_at: str | None = None
+    scan_severity: str | None = None
+    scan_risk_score: int | None = None
+
+
+class FeedbackListResponse(BaseModel):
+    feedback: list[FeedbackItem]
+    total: int
+    unreviewed: int
+
+
+class SeverityCount(BaseModel):
+    severity: str
+    count: int
+
+
+class MetricsResponse(BaseModel):
+    """Operational counts, not model evaluation.
+
+    Precision, recall and false-positive rate come from the held-out set in
+    02_Model/evaluate.py (WBS 2.1, 5.5). What is below is what users reported
+    and what the service did, which is a review signal and nothing more -
+    labelling it as model accuracy would be exactly the overstatement the
+    proposal commits to avoiding.
+    """
+
+    total_scans: int
+    scans_by_severity: list[SeverityCount]
+    scans_last_7_days: int
+    median_duration_ms: int | None = None
+    active_installs: int
+    total_feedback: int
+    unreviewed_feedback: int
+    reported_false_positives: int
+    reported_false_negatives: int
+    reported_disagreement_rate: float = Field(
+        description="Feedback rows over total scans. User-reported, not measured error.")
+    active_model_variant: str | None = None
+    active_model_trained_utc: str | None = None

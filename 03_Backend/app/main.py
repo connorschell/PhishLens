@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 
 from . import __version__
 from .config import get_settings
-from .routes import feedback, health, register, scan
+from .routes import dashboard, feedback, health, register, scan
 
 settings = get_settings()
 logging.basicConfig(level=settings.log_level)
@@ -46,6 +46,9 @@ app.include_router(health.router)
 app.include_router(register.router)
 app.include_router(scan.router)
 app.include_router(feedback.router)
+# WBS 4.5. Routed before the static mount so /dashboard/api/* resolves here and
+# only the page itself falls through to static/dashboard/index.html.
+app.include_router(dashboard.router)
 
 # Testing surface: a page that posts to /scan from the same origin, so no CORS
 # policy is needed. Mounted last so it cannot shadow the API routes above.

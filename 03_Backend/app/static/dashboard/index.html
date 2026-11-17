@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PhishLens — operator dashboard</title>
+<style>
+  :root{--line:#dadce0;--ink:#202124;--muted:#5f6368;--bg:#f6f8fc;--blue:#1a73e8;
+        --clear:#1e8e3e;--caution:#f9ab00;--suspicious:#e8710a;--dangerous:#d93025;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:15px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 60px}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:18px}
+  label{display:block;font-size:12px;color:var(--muted);margin:12px 0 4px;font-weight:600;
+        letter-spacing:.02em;text-transform:uppercase}
+  input,select{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;
+               font:14px/1.5 inherit;color:var(--ink);background:#fff}
+  input:focus,select:focus{outline:2px solid var(--blue);outline-offset:-1px;border-color:transparent}
+  button{background:var(--blue);color:#fff;border:0;border-radius:8px;
+         padding:10px 18px;font:600 14px inherit;cursor:pointer}
+  button:disabled{opacity:.55;cursor:default}
+  .ghost{background:#fff;color:var(--blue);border:1px solid var(--line)}
+  .tiny{padding:5px 10px;font-size:12px}
+  .err{color:var(--dangerous);font-size:13px;margin-top:10px;min-height:18px}
+  .hint{font-size:12px;color:var(--muted);margin-top:10px}
+
+  /* login */
+  #login{max-width:380px;margin:60px auto}
+
+  /* tabs */
+  nav{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:18px}
+  nav button{background:none;color:var(--muted);border:0;border-bottom:2px solid transparent;
+             border-radius:0;padding:10px 14px;font:600 13.5px inherit}
+  nav button[aria-selected=true]{color:var(--blue);border-bottom-color:var(--blue)}
+  .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+
+  /* metric tiles */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  .tile{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .tile .n{font-size:26px;font-weight:700;line-height:1.1}
+  .tile .k{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;
+           font-weight:700;margin-bottom:6px}
+  .tile .foot{font-size:11.5px;color:var(--muted);margin-top:4px}
+
+  /* bars */
+  .bars{margin-top:6px}
+  .bar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px}
+  .bar .lbl{flex:0 0 92px;color:var(--muted)}
+  .bar .track{flex:1;background:#eef1f6;border-radius:999px;height:10px;overflow:hidden}
+  /* display:block matters - the fill is a span, and width/height do not apply
+     to an inline box, so without this the bars render as empty tracks. */
+  .bar .fill{display:block;height:100%;border-radius:999px}
+  .bar .v{flex:0 0 54px;text-align:right;font-variant-numeric:tabular-nums}
+  .f-clear{background:var(--clear)}.f-caution{background:var(--caution)}
+  .f-suspicious{background:var(--suspicious)}.f-dangerous{background:var(--dangerous)}
+
+  /* tables */
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;
+     color:var(--muted);font-weight:700;padding:0 10px 8px 0;border-bottom:1px solid var(--line)}
+  td{padding:10px 10px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+  td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tier{display:inline-block;font-size:10.5px;font-weight:700;text-transform:uppercase;
+        letter-spacing:.05em;padding:2px 8px;border-radius:999px;color:#fff}
+  .t-clear{background:var(--clear)}.t-caution{background:var(--caution)}
+  .t-suspicious{background:var(--suspicious)}.t-dangerous{background:var(--dangerous)}
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;text-transform:uppercase;
+        letter-spacing:.05em;padding:2px 8px;border-radius:4px;background:#e8eaed;color:var(--muted)}
+  .pill.fp{background:#fce8e6;color:#c5221f}
+  .pill.fn{background:#fef7e0;color:#7a5900}
+  .pill.ok{background:#e6f4ea;color:#137333}
+  .note{color:var(--muted);font-size:12.5px;margin-top:4px;white-space:pre-wrap}
+  .empty{color:var(--muted);font-size:13.5px;padding:18px 0}
+  .pager{display:flex;align-items:center;gap:12px;margin-top:14px;font-size:13px;color:var(--muted)}
+  .caveat{background:#fff8e1;border:1px solid #f6d58a;border-radius:8px;padding:10px 12px;
+          font-size:12.5px;color:#7a5900;margin-top:14px}
+  .controls{display:flex;gap:12px;align-items:flex-end;margin-bottom:14px}
+  .controls > div{min-width:180px}
+  .controls label{margin-top:0}
+  [hidden]{display:none !important}
+</style></head><body>
+
+<!-- ------------------------------------------------------------- login -->
+<div id="login" class="card">
+  <h1>PhishLens</h1>
+  <div class="sub">Operator dashboard. Sign in to continue.</div>
+  <form id="loginForm">
+    <label for="pw">Password</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <div style="margin-top:16px"><button id="loginBtn" type="submit">Sign in</button></div>
+    <div id="loginErr" class="err"></div>
+  </form>
+  <div class="hint">The session lasts 12 hours and is held in this tab only.</div>
+</div>
+
+<!-- --------------------------------------------------------------- app -->
+<div id="app" class="wrap" hidden>
+  <h1>PhishLens</h1>
+  <div class="sub">Operator dashboard — scan history, feedback review, service metrics.</div>
+
+  <nav>
+    <button id="tab-overview"  aria-selected="true"  data-view="overview">Overview</button>
+    <button id="tab-scans"     aria-selected="false" data-view="scans">Scan history</button>
+    <button id="tab-feedback"  aria-selected="false" data-view="feedback">Feedback review</button>
+    <div class="right">
+      <span id="fbBadge" class="pill" hidden></span>
+      <button id="signout" class="ghost tiny" type="button">Sign out</button>
+    </div>
+  </nav>
+
+  <div id="globalErr" class="err"></div>
+
+  <!-- overview -->
+  <section id="view-overview">
+    <div id="tiles" class="tiles"></div>
+    <div class="card" style="margin-top:18px">
+      <div class="k" style="font-size:11.5px;color:var(--muted);text-transform:uppercase;
+           letter-spacing:.04em;font-weight:700;margin-bottom:10px">Scans by severity</div>
+      <div id="bars" class="bars"></div>
+    </div>
+    <div class="caveat">
+      These are operational counts, not model evaluation. Precision, recall and
+      false-positive rate are measured against the held-out set in
+      <strong>02_Model/evaluate.py</strong> (WBS 2.1 and 5.5). The disagreement rate below is
+      what users reported, which is a review signal — not measured error.
+    </div>
+  </section>
+
+  <!-- scans -->
+  <section id="view-scans" hidden>
+    <div class="card">
+      <div class="controls">
+        <div>
+          <label for="sevFilter">Severity</label>
+          <select id="sevFilter">
+            <option value="">All</option>
+            <option value="dangerous">Dangerous</option>
+            <option value="suspicious">Suspicious</option>
+            <option value="caution">Caution</option>
+            <option value="clear">Clear</option>
+          </select>
+        </div>
+        <button id="refreshScans" class="ghost" type="button">Refresh</button>
+      </div>
+      <div id="scansWrap"></div>
+      <div class="pager">
+        <button id="prev" class="ghost tiny" type="button">Previous</button>
+        <span id="pageInfo"></span>
+        <button id="next" class="ghost tiny" type="button">Next</button>
+      </div>
+      <div class="hint">
+        No subject, body or sender address appears here because the database stores none —
+        a scan is identified by a salted fingerprint. Install ids are truncated to 8 characters:
+        enough to group scans, not enough to identify an installation.
+      </div>
+    </div>
+  </section>
+
+  <!-- feedback -->
+  <section id="view-feedback" hidden>
+    <div class="card">
+      <div class="controls">
+        <div>
+          <label for="fbFilter">Show</label>
+          <select id="fbFilter">
+            <option value="false">All feedback</option>
+            <option value="true">Unreviewed only</option>
+          </select>
+        </div>
+        <button id="refreshFb" class="ghost" type="button">Refresh</button>
+      </div>
+      <div id="fbWrap"></div>
+      <div class="caveat">
+        Marking an item reviewed records that a person looked at it. It does not relabel the
+        scan or feed the model — feedback is a queue for WBS 2.4 calibration, never ground
+        truth applied automatically.
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const API = "/dashboard/api";
+const KEY = "phishlens_dash_token";
+
+let token = sessionStorage.getItem(KEY) || null;
+let page = 1, totalScans = 0, pageSize = 50;
+
+/* ---------------------------------------------------------------- fetch */
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: "Bearer " + token } : {}),
+      ...(opts.headers || {}),
+    },
+  });
+  if (res.status === 401) { signOut("Session expired. Sign in again."); throw new Error("401"); }
+  if (!res.ok) {
+    let detail = res.statusText;
+    try { detail = (await res.json()).detail || detail; } catch {}
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+function showError(msg) { $("globalErr").textContent = msg || ""; }
+
+/* ---------------------------------------------------------------- login */
+$("loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("loginErr").textContent = "";
+  $("loginBtn").disabled = true;
+  try {
+    const r = await fetch(API + "/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: $("pw").value }),
+    });
+    if (!r.ok) {
+      let d = "Sign in failed.";
+      try { d = (await r.json()).detail || d; } catch {}
+      throw new Error(d);
+    }
+    const data = await r.json();
+    token = data.token;
+    sessionStorage.setItem(KEY, token);
+    $("pw").value = "";
+    enterApp();
+  } catch (err) {
+    $("loginErr").textContent = err.message;
+  } finally {
+    $("loginBtn").disabled = false;
+  }
+});
+
+function signOut(message) {
+  token = null;
+  sessionStorage.removeItem(KEY);
+  $("app").hidden = true;
+  $("login").hidden = false;
+  $("loginErr").textContent = message || "";
+}
+$("signout").addEventListener("click", () => signOut(""));
+
+/* ----------------------------------------------------------------- tabs */
+document.querySelectorAll("nav button[data-view]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("nav button[data-view]").forEach(b =>
+      b.setAttribute("aria-selected", String(b === btn)));
+    ["overview", "scans", "feedback"].forEach(v =>
+      $("view-" + v).hidden = v !== btn.dataset.view);
+    if (btn.dataset.view === "scans") loadScans();
+    if (btn.dataset.view === "feedback") loadFeedback();
+    if (btn.dataset.view === "overview") loadMetrics();
+  });
+});
+
+/* ------------------------------------------------------------- overview */
+function tile(k, n, foot) {
+  return `<div class="tile"><div class="k">${esc(k)}</div>
+          <div class="n">${esc(n)}</div>
+          ${foot ? `<div class="foot">${esc(foot)}</div>` : ""}</div>`;
+}
+
+async function loadMetrics() {
+  try {
+    const m = await api("/metrics");
+    $("tiles").innerHTML = [
+      tile("Total scans", m.total_scans.toLocaleString(), `${m.scans_last_7_days} in last 7 days`),
+      tile("Active installs", m.active_installs),
+      tile("Median scan time", m.median_duration_ms == null ? "—" : m.median_duration_ms + " ms"),
+      tile("Active model", m.active_model_variant || "none",
+           m.active_model_trained_utc ? "trained " + m.active_model_trained_utc.slice(0, 10) : ""),
+      tile("Feedback received", m.total_feedback, `${m.unreviewed_feedback} unreviewed`),
+      tile("Reported disagreement", (m.reported_disagreement_rate * 100).toFixed(2) + "%",
+           `${m.reported_false_positives} FP · ${m.reported_false_negatives} FN reported`),
+    ].join("");
+
+    const max = Math.max(1, ...m.scans_by_severity.map(s => s.count));
+    const order = ["dangerous", "suspicious", "caution", "clear"];
+    const rows = order
+      .map(sev => m.scans_by_severity.find(s => s.severity === sev) || { severity: sev, count: 0 });
+    $("bars").innerHTML = rows.map(s => `
+      <div class="bar">
+        <span class="lbl">${esc(s.severity)}</span>
+        <span class="track"><span class="fill f-${esc(s.severity)}"
+              style="width:${(s.count / max * 100).toFixed(1)}%"></span></span>
+        <span class="v">${s.count.toLocaleString()}</span>
+      </div>`).join("");
+
+    if (m.unreviewed_feedback > 0) {
+      $("fbBadge").hidden = false;
+      $("fbBadge").className = "pill fp";
+      $("fbBadge").textContent = m.unreviewed_feedback + " unreviewed";
+    } else { $("fbBadge").hidden = true; }
+    showError("");
+  } catch (e) { showError(e.message); }
+}
+
+/* ---------------------------------------------------------------- scans */
+async function loadScans() {
+  try {
+    const sev = $("sevFilter").value;
+    const d = await api(`/scans?page=${page}&severity=${encodeURIComponent(sev)}`);
+    totalScans = d.total; pageSize = d.page_size;
+    if (!d.scans.length) {
+      $("scansWrap").innerHTML = `<div class="empty">No scans recorded yet.</div>`;
+    } else {
+      $("scansWrap").innerHTML = `<table><thead><tr>
+          <th>Scan</th><th>When</th><th>Score</th><th>Severity</th>
+          <th>Top signal</th><th>Install</th><th>Model</th><th>Time</th><th></th>
+        </tr></thead><tbody>` + d.scans.map(s => `
+        <tr>
+          <td class="num">#${s.scan_id}</td>
+          <td class="num">${esc(s.scored_at.replace("T", " ").slice(0, 16))}</td>
+          <td class="num"><strong>${s.risk_score}</strong></td>
+          <td><span class="tier t-${esc(s.severity)}">${esc(s.severity)}</span></td>
+          <td>${esc(s.top_signal || "—")}</td>
+          <td class="num">${s.install_id_short ? esc(s.install_id_short) : '<span class="pill">degraded</span>'}</td>
+          <td class="num">${esc(s.model_variant)}</td>
+          <td class="num">${s.duration_ms == null ? "—" : s.duration_ms + " ms"}</td>
+          <td>${s.has_feedback ? '<span class="pill fp">feedback</span>' : ""}</td>
+        </tr>`).join("") + `</tbody></table>`;
+    }
+    const first = totalScans ? (page - 1) * pageSize + 1 : 0;
+    const last = Math.min(page * pageSize, totalScans);
+    $("pageInfo").textContent = `${first}–${last} of ${totalScans.toLocaleString()}`;
+    $("prev").disabled = page <= 1;
+    $("next").disabled = page * pageSize >= totalScans;
+    showError("");
+  } catch (e) { showError(e.message); }
+}
+$("prev").addEventListener("click", () => { if (page > 1) { page--; loadScans(); } });
+$("next").addEventListener("click", () => { page++; loadScans(); });
+$("sevFilter").addEventListener("change", () => { page = 1; loadScans(); });
+$("refreshScans").addEventListener("click", () => loadScans());
+
+/* ------------------------------------------------------------- feedback */
+async function loadFeedback() {
+  try {
+    const only = $("fbFilter").value;
+    const d = await api(`/feedback?unreviewed_only=${only}`);
+    if (!d.feedback.length) {
+      $("fbWrap").innerHTML = `<div class="empty">Nothing to review.</div>`;
+    } else {
+      $("fbWrap").innerHTML = `<table><thead><tr>
+          <th>Reported</th><th>Scan</th><th>Verdict given</th><th>Claim</th>
+          <th>Note</th><th>Status</th><th></th>
+        </tr></thead><tbody>` + d.feedback.map(f => `
+        <tr>
+          <td class="num">${esc(f.created_at.replace("T", " ").slice(0, 16))}</td>
+          <td class="num">#${f.scan_id}</td>
+          <td>${f.scan_severity
+                ? `<span class="tier t-${esc(f.scan_severity)}">${esc(f.scan_severity)}</span>
+                   <span class="num"> ${f.scan_risk_score}</span>`
+                : "—"}</td>
+          <td><span class="pill ${f.disagreement === 'false_positive' ? 'fp' : 'fn'}">
+              ${f.disagreement === 'false_positive' ? 'false positive' : 'false negative'}</span></td>
+          <td>${f.note ? `<div class="note">${esc(f.note)}</div>` : '<span class="empty">—</span>'}</td>
+          <td>${f.reviewed_at
+                ? `<span class="pill ok">reviewed</span>`
+                : `<span class="pill fp">open</span>`}</td>
+          <td>${f.reviewed_at ? "" :
+                `<button class="ghost tiny" data-review="${f.feedback_id}">Mark reviewed</button>`}</td>
+        </tr>`).join("") + `</tbody></table>`;
+      $("fbWrap").querySelectorAll("button[data-review]").forEach(b => {
+        b.addEventListener("click", async () => {
+          b.disabled = true;
+          try { await api(`/feedback/${b.dataset.review}/review`, { method: "POST" });
+                await loadFeedback(); await loadMetrics(); }
+          catch (e) { showError(e.message); b.disabled = false; }
+        });
+      });
+    }
+    showError("");
+  } catch (e) { showError(e.message); }
+}
+$("fbFilter").addEventListener("change", () => loadFeedback());
+$("refreshFb").addEventListener("click", () => loadFeedback());
+
+/* ----------------------------------------------------------------- boot */
+function enterApp() {
+  $("login").hidden = true;
+  $("app").hidden = false;
+  loadMetrics();
+}
+if (token) { enterApp(); }
+</script>
+</body></html>

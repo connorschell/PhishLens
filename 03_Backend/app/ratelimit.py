@@ -86,3 +86,8 @@ def limit(which: Callable[[], str], scope: str):
 scan_limit = limit(lambda: get_settings().scan_rate_limit, "scan")
 register_limit = limit(lambda: get_settings().register_rate_limit, "register")
 feedback_limit = limit(lambda: get_settings().feedback_rate_limit, "feedback")
+# WBS 4.5. Keyed per IP like /register, because an unauthenticated caller is all
+# a password form ever has. This is the brute-force bound on the dashboard
+# password, so it is the strictest limit in the service.
+dashboard_login_limit = limit(lambda: get_settings().dashboard_login_rate_limit,
+                              "dashboard_login")

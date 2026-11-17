@@ -13,6 +13,11 @@ schema wins.
 | `POST` | `/register` | none | 10/hour per IP | Mint one per-install token |
 | `POST` | `/scan`     | Bearer | 60/min per install | Score a message, return the panel |
 | `POST` | `/feedback` | Bearer | 20/hour per install | Record disagreement with a verdict |
+| `POST` | `/dashboard/api/login` | password | 10/hour per IP | Exchange the operator password for a session |
+| `GET`  | `/dashboard/api/scans` | Dashboard session | none | Paged scan history across installs |
+| `GET`  | `/dashboard/api/feedback` | Dashboard session | none | Feedback queue, newest and unreviewed first |
+| `POST` | `/dashboard/api/feedback/{id}/review` | Dashboard session | none | Stamp `reviewed_at` |
+| `GET`  | `/dashboard/api/metrics` | Dashboard session | none | Operational counts |
 
 ## First run
 
@@ -72,6 +77,40 @@ database outage is the worse failure. `/register` and `/feedback` do not
 degrade: an unverifiable token and unattributable feedback are both worse than
 a clear `503`. Full reasoning in `app/auth.py` and
 `00_Admin/auth-design-revision.md`.
+
+## Dashboard (WBS 4.5)
+
+Two different credentials, deliberately. The per-install bearer token is scoped
+to one install's own rows; the dashboard reads across all of them, so it has its
+own operator password set in the deployed `.env`:
+
+```http
+POST /dashboard/api/login
+{ "password": "..." }
+
+200 { "token": "pl_dash_...", "expires_at": "..." }
+```
+
+The password is checked once and exchanged for a session token — an HMAC over
+its own expiry, keyed by `TOKEN_SIGNING_SECRET`, stateless and valid for
+`DASHBOARD_SESSION_HOURS` (default 12). Sent as `Authorization: Bearer` on every
+dashboard call. An install token presented here is rejected; so is a dashboard
+session presented to `/scan`.
+
+Fail-closed: with `DASHBOARD_PASSWORD` or `TOKEN_SIGNING_SECRET` unset — or the
+signing secret still at the `change_me_locally` placeholder — login and every
+dashboard route return `503`. A deployment that forgot to set the password gets
+a dashboard that does not work rather than one serving scan history publicly.
+
+Rotating `TOKEN_SIGNING_SECRET` and restarting invalidates every outstanding
+session. That is the only revocation this stateless scheme has, and it is
+deliberate for a single-operator deployment.
+
+Unlike `/scan`, these routes have no degraded path: a dashboard is a convenience
+and an honest `503` beats a page that looks authoritative while showing nothing.
+
+The page itself is served at `/dashboard/` from
+`03_Backend/app/static/dashboard/`.
 
 ## CORS
 
