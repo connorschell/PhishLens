@@ -7,26 +7,39 @@
 
 ## 1. Set up the demo machine (do this first, not on the day)
 
-Everything the demo needs runs locally. You do **not** need the domain or TLS for
-this — Chrome treats `http://localhost` as a trusted origin.
+The demo runs against the **deployed** server at `https://api.usephishlens.app`,
+which went live 11/10. You do not need Docker running locally for it.
 
 ```powershell
-# from the project folder
-docker compose up --build -d
-curl http://localhost:8000/health
+curl.exe -sS https://api.usephishlens.app/health
 ```
 
-If `/health` reports the model is not loaded, seed it:
-
-```powershell
-docker compose exec api python 03_Backend/db/seed/seed_model_version.py --variant full --activate
-```
+Expect `"version":"0.3.0"` and `"model_loaded":true`. If that fails, fall back to
+local (see *If the server is down* below) rather than debugging on the day.
 
 Then load the extension:
 
 ```
 chrome://extensions  ->  Developer mode ON  ->  Load unpacked  ->  04_Extension
 ```
+
+**Order matters.** Load the extension *before* opening Gmail. Reloading the
+extension under a Gmail tab that is already open kills the injected script, and
+the panel then hangs on its loading state with no way out. If that happens,
+refresh the Gmail tab.
+
+### If the server is down
+
+In `04_Extension/config.js`, change the last line of the API block to:
+
+```js
+export const API_BASE = API_BASE_LOCAL;
+```
+
+Then `docker compose up -d` locally, reload the extension, reopen Gmail. Chrome
+trusts `http://localhost` without a certificate, so this works with no setup.
+Say out loud that you are demoing against a local instance and why — having a
+tested fallback is not a failure.
 
 Open the service worker console from that same page (click **service worker**
 under PhishLens). On first run it should log `registered install <uuid>`. If it
@@ -60,7 +73,12 @@ file is the only place they live. **Check this by Sunday**, not Tuesday night.
 You also need a **legitimate** message to show the CLEAR tier. Any normal email
 from a person works.
 
-## 3. Record the backup video
+## 3. Record the backup video (optional — see note)
+
+> Not an IM2 requirement. The recorded demonstration is deliverable #22, due with
+> the **final** presentation on 11/30. It is insurance for tomorrow, not a
+> graded item. Skip it if time is short.
+
 
 Do this once the demo works, and before Tuesday. Windows + Alt + R starts the Xbox
 Game Bar recorder; OBS is better if you have it.
@@ -107,7 +125,7 @@ Budget:
 | **Demo (slide 5)** | **3m 30s** |
 | How it works (slide 6) | 45s |
 | Evidence (slide 7) | 30s |
-| Blocked + next (slides 8–9) | 60s |
+| Resolved + next (slides 8–9) | 60s |
 
 Every slide has speaker notes already written — open the deck in Presenter View
 and they're there.
@@ -119,7 +137,8 @@ done. Resist narrating every signal — read the top one and point at the rest.
 ## 7. On the day
 
 - Dress at least business casual. It's a graded line item.
-- Start the Docker stack **before** class and confirm `/health` answers.
+- Confirm `https://api.usephishlens.app/health` answers **before** class.
+- Load the extension, **then** open Gmail — not the other way round.
 - Have Gmail already open with both test messages visible in the list.
 - Have the backup video open in a second tab, ready to play.
 - Close Slack, email notifications, and anything else that pops up.
@@ -129,8 +148,10 @@ done. Resist narrating every signal — read the top one and point at the rest.
 ## What to say if asked
 
 **"Why not just use the IP address for the demo server?"**
-Let's Encrypt won't issue a certificate for a bare IP — it has to be a name.
-Today's demo runs locally, where Chrome trusts `localhost` without a certificate.
+Let's Encrypt won't issue a certificate for a bare IP — certificates are issued
+to names, not numbers. That was the blocker reported at the last update. It's
+resolved: `api.usephishlens.app` was registered 11/10 and the demo you just
+watched ran against it over HTTPS.
 
 **"Is the token secure?"**
 It's an identifier, not a secret. Anyone can register and get one. What it buys

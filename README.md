@@ -8,6 +8,9 @@ extracted features to a hosted API, and displays a risk score, a severity tier,
 and a ranked plain-English list of the signals that produced it. Explainability
 is the defining feature, not raw detection rate.
 
+**Live system:** https://api.usephishlens.app/health — the deployed API, behind
+Nginx with a Let's Encrypt certificate (WBS 5.2, live 10 November 2026).
+
 ## Repository layout
 
 Directories are numbered to match the WBS in the approved proposal.
@@ -19,7 +22,7 @@ Directories are numbered to match the WBS in the approved proposal.
 | `02_Model/` | 2 | Classifier training, evaluation, contributions, explanations |
 | `03_Backend/` | 3 | FastAPI service, routes, services, PostgreSQL schema and migrations |
 | `04_Extension/` | 4 | MV3 extension and web dashboard |
-| `05_Deployment/` | 5 | VPS provisioning, Docker Compose, Nginx, backups, test plan |
+| `05_Deployment/` | 5 | VPS provisioning, Nginx + TLS config, production Compose overlay, test plan |
 | `06_Deliverables/` | — | Presentations, reports, design artifacts |
 | `07_WeeklyUpdates/` | — | Weekly update submissions |
 | `08_Logbook/` | — | Cumulative logbook |
@@ -91,10 +94,15 @@ explanation in a panel above the message body.
 chrome://extensions  ->  Developer mode  ->  Load unpacked  ->  04_Extension
 ```
 
-`config.js` points at `http://localhost:8000` by default. Chrome treats
-`http://localhost` as a trustworthy origin, so the extension works against a
-locally running stack with no certificate; the deployed server requires HTTPS
-and is pending a hostname (WBS 5.2).
+`config.js` points at the deployed API, `https://api.usephishlens.app`.
+`API_BASE_LOCAL` is kept alongside it and `manifest.json` lists both hosts, so
+switching to a local stack is a one-line change in `config.js` and needs no
+manifest edit. Chrome treats `http://localhost` as a trustworthy origin, so the
+local option works with no certificate.
+
+Load the extension **before** opening Gmail. Reloading it under an already-open
+Gmail tab invalidates the injected content script, and the panel then hangs on
+its loading state; refreshing the Gmail tab clears it. Tracked as task 4.6.
 
 | File | Role |
 |---|---|
@@ -117,6 +125,25 @@ Endpoint reference: `03_Backend/API_CONTRACT.md` and `03_Backend/openapi.json`.
 ```bash
 python -m pytest 01_Data 02_Model 03_Backend      # 94 tests
 ```
+
+## Deployment
+
+The production stack runs on an Ubuntu 24.04 droplet: Docker Compose for the API
+and PostgreSQL, with Nginx on the host terminating TLS and proxying to the API on
+loopback. Nothing but Nginx is reachable from outside the host.
+
+```bash
+git pull
+docker compose -f docker-compose.yml -f 05_Deployment/docker-compose.prod.yml build
+docker compose -f docker-compose.yml -f 05_Deployment/docker-compose.prod.yml up -d
+curl -sS https://api.usephishlens.app/health          # check the reported version
+```
+
+Always rebuild rather than restart, and check the version `/health` reports: the
+deployed code is only as current as the last pushed commit that was built. The
+production overlay runs uvicorn with `--proxy-headers` so the application sees
+the real caller behind Nginx — without it the per-IP limit on `/register` applies
+to every caller at once. Provisioning is recorded in `05_Deployment/provision.md`.
 
 ## Data
 
