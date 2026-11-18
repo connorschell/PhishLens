@@ -53,6 +53,42 @@ follow-on work after the system is end to end. The blocker is the dual
 implementation, not the design. If the project finishes ahead of schedule in the
 reserve period, this is the first thing to spend it on.
 
+## Third-party disclosure: Google Safe Browsing (WBS 3.5)
+
+Added 2026-11-17. This is the one place where data about a user's mail leaves
+PhishLens entirely, and it is recorded here rather than left for a reader to
+work out.
+
+**What leaves.** The Lookup API is sent the **full URLs** found in the message,
+up to ten per scan. Not hashes — full URLs, including any path or query string
+the sender put in them. A tracking link of the form
+`https://example.com/click?u=alice@university.edu` would carry that address to
+Google along with it.
+
+**What is stored here.** Only `sha256(url)`, in `url_reputation`, with the
+verdict and an expiry (`schema.sql`). The URL itself is never written down on
+this side, so the earlier claim — a database compromise yields measurements,
+not mail — still holds exactly as stated.
+
+**Why the weaker option was taken.** The Update API avoids the disclosure: the
+client keeps a local database of hashed prefixes and only queries when a prefix
+matches, so Google never learns which URL was actually checked. It also means
+maintaining and refreshing that database, implementing the prefix-match logic,
+and handling partial-hash collisions — well beyond what this project has room
+for. The Lookup API is one POST. That is the whole reason, and it is a
+limitation rather than a design preference.
+
+**What reduces the exposure.** The cache: a URL already checked and unexpired
+is answered locally and is not sent again. A deployment that leaves
+`SAFE_BROWSING_API_KEY` blank makes no external call at all and loses only this
+one signal.
+
+**Consequence for the user-facing claim.** The first-run text below says the
+message is sent for scoring and not stored. It does not currently say that
+links may be sent to Google. If Safe Browsing is enabled in a deployment real
+people use, that sentence needs amending — a privacy claim that is true of the
+database but silent about an outbound third-party call is not honest enough.
+
 ## Where this is stated to the user
 
 The extension's first-run screen (WBS 4.1) says in one sentence that the open

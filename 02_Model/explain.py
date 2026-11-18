@@ -68,15 +68,35 @@ RULE_FLOORS = {
     "link_display_mismatch": "suspicious",
     "punycode_link": "suspicious",
     "risky_attachment": "suspicious",
+    # WBS 3.5. The only floor at "dangerous", and the only rule whose evidence
+    # comes from outside the message: Google reporting the destination as
+    # malware or phishing is not an inference about wording, it is a statement
+    # about where the link currently leads. A low model probability is not a
+    # reason to soften it.
+    "safe_browsing_unsafe": "dangerous",
 }
 
 # Shown when a rule raised the tier above what the model alone would have said.
 # The split has to be explained, because the panel will show a low score beside
 # a high tier and that looks like a contradiction until it is named.
 RULE_FLOOR_HEADLINE = "A clear warning sign"
-RULE_FLOOR_ADVICE = ("The scoring model did not flag this message on its own, but a direct check "
-                     "found something that is wrong regardless of the score. Treat links and "
-                     "attachments here as untrusted.")
+_RULE_FLOOR_PREFIX = ("The scoring model did not flag this message on its own, but a direct check "
+                      "found something that is wrong regardless of the score. ")
+
+
+def rule_floor_advice(severity: str) -> str:
+    """Floor advice, worded for the tier the floor actually produced.
+
+    This used to be one fixed string ending in "treat links as untrusted",
+    which was written when every floor was "suspicious". WBS 3.5 added a floor
+    at "dangerous", and telling someone to treat a confirmed malware link as
+    merely untrusted understates it, so the advice now follows the tier.
+    """
+    return _RULE_FLOOR_PREFIX + TIER_ADVICE.get(severity, TIER_ADVICE["suspicious"])
+
+
+# Kept for callers that imported the constant before WBS 3.5.
+RULE_FLOOR_ADVICE = _RULE_FLOOR_PREFIX + TIER_ADVICE["suspicious"]
 
 
 def apply_rule_floor(severity: str, rules: list[dict]) -> tuple[str, str | None]:
@@ -253,8 +273,17 @@ def rule_signals(record) -> list[dict]:
     return out
 
 
-def explain(record, features: dict[str, float], bundle: dict) -> dict:
-    """Score a message and return everything the panel needs to render."""
+def explain(record, features: dict[str, float], bundle: dict,
+            extra_rules: list[dict] | None = None) -> dict:
+    """Score a message and return everything the panel needs to render.
+
+    `extra_rules` carries rule-layer signals produced outside this module -
+    WBS 3.5's Safe Browsing verdicts, which need network I/O and so cannot be
+    computed here, where everything is pure and offline. They are merged with
+    the local rules before the floor is applied, so there is still exactly one
+    place that decides severity. Defaulting to None keeps every existing
+    caller, and the WBS 2.3 tests, working unchanged.
+    """
     scored = score_features(bundle, features)
 
     signals = []
@@ -276,7 +305,10 @@ def explain(record, features: dict[str, float], bundle: dict) -> dict:
         })
 
     # Rule hits go to the top and are de-duplicated against the model layer.
-    rules = rule_signals(record)
+    # Externally supplied rules go first: a confirmed-malicious destination is
+    # the strongest thing the panel can say, so it should not be pushed below
+    # a wording heuristic by MAX_SIGNALS truncation.
+    rules = list(extra_rules or []) + rule_signals(record)
     seen = {s["text"] for s in signals}
     rules = [r for r in rules if r["text"] not in seen]
     ranked = rules + signals
@@ -301,7 +333,7 @@ def explain(record, features: dict[str, float], bundle: dict) -> dict:
         "probability": scored["probability"],
         "severity": severity,
         "headline": RULE_FLOOR_HEADLINE if floored_by else HEADLINES[severity],
-        "advice": RULE_FLOOR_ADVICE if floored_by else TIER_ADVICE[severity],
+        "advice": rule_floor_advice(severity) if floored_by else TIER_ADVICE[severity],
         "model_severity": scored["severity"],
         "severity_floored_by": floored_by,
         "signals": ranked,

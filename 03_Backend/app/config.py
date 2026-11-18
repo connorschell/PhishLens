@@ -47,6 +47,22 @@ class Settings(BaseSettings):
     # admin_auth.py) rather than signing sessions with a known value.
     token_signing_secret: str = ""
 
+    # --- WBS 3.5: Google Safe Browsing -------------------------------------
+    # Blank key means the signal is simply not used: no error, no warning on
+    # every scan, the verdict falls back to the model and the existing rules.
+    safe_browsing_api_key: str = ""
+    safe_browsing_enabled: bool = True
+    # Short on purpose. Someone is waiting on a security decision, so a slow
+    # warning is a worse failure than a missing third-party signal.
+    safe_browsing_timeout_s: float = 2.0
+    # Bounds one message's upstream request and cache writes.
+    safe_browsing_max_urls: int = 10
+    # Google returns cacheDuration for a match; this is the fallback. The safe
+    # TTL is ours entirely - the API reports only matches, so "no match" has no
+    # duration attached, and a clean URL can turn malicious later.
+    safe_browsing_unsafe_ttl_s: int = 300
+    safe_browsing_safe_ttl_s: int = 43_200          # 12 hours
+
     # --- WBS 4.5: operator dashboard ---------------------------------------
     # Single operator password. Empty means the dashboard cannot issue a
     # session and every route under it returns 503. Fail-closed on purpose: an

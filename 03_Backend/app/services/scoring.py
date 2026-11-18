@@ -34,6 +34,7 @@ import contributions as contrib                            # noqa: E402
 import explain as explain_mod                              # noqa: E402
 
 from ..config import get_settings                          # noqa: E402
+from . import safebrowsing                                 # noqa: E402
 
 
 class ModelUnavailable(RuntimeError):
@@ -65,7 +66,13 @@ def score(payload: dict[str, Any]) -> dict[str, Any]:
     bundle = get_bundle()
     record = parse_gmail_payload(payload)
     feats = extract_features(record)
-    panel = explain_mod.explain(record, feats, bundle)
+    # WBS 3.5. The one step in the chain that leaves this machine, so it sits
+    # here rather than inside explain(), which is pure and offline by design.
+    # check_record never raises: with no key, a timeout or an unreachable
+    # cache it returns [] and the verdict falls back to the model and the
+    # local rules.
+    extra_rules = safebrowsing.check_record(record)
+    panel = explain_mod.explain(record, feats, bundle, extra_rules=extra_rules)
     return {
         "panel": panel,
         "features": feats,
