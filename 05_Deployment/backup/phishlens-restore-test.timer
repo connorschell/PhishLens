@@ -1,0 +1,11 @@
+# Mondays at 04:07 UTC, after Sunday night's weekly dump. WBS 5.3.
+[Unit]
+Description=Verify the PhishLens backup restores weekly
+
+[Timer]
+OnCalendar=Mon *-*-* 04:07:00
+Persistent=true
+Unit=phishlens-restore-test.service
+
+[Install]
+WantedBy=timers.target

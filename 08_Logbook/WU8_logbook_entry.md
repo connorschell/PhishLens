@@ -4,16 +4,17 @@ PhishLens · CYBR 498W · Connor Schell
 
 ## Hours
 
-7.5 hours against 17.5 estimated. Two of the three tasks came in well under:
+8 hours against 17.5 estimated. Two of the three tasks came in well under:
 the dashboard because the database schema from WBS 3.1 already held everything
 it needed to display, and Safe Browsing because the Lookup API is a single
-request and the cache table was built for it in week 5. Running total 95.25.
+request and the cache table was built for it in week 5. Running total 95.75.
 
 | Task | Hours | What was done |
 |---|---|---|
 | 4.5 | 3.0 | Operator dashboard — read endpoints, password gate, three views |
 | 4.5 | 1.0 | Deployed to the VPS; SSH set up from the replacement laptop |
 | 3.5 | 2.5 | Google Safe Browsing — cached rule-layer signal with graceful degradation |
+| 3.5 | 0.5 | Key issued and deployed; verified end to end against the live API |
 | 4.6 | 1.0 | Fixed the panel hang on an invalidated extension context |
 
 ## What was completed
@@ -121,12 +122,35 @@ It cannot be found by reading the code, so there is a small harness
 script against a stubbed page and drives both invalidation paths plus the
 healthy one.
 
-## What did not get done
+## Taking Safe Browsing live, and what the verification taught me
 
-Safe Browsing is written but not active in production: the server needs
-`SAFE_BROWSING_API_KEY`. The code treats a missing key as the signal being off,
-so nothing is broken in the meantime — the verdict falls back to the model and
-the existing rules.
+The key went on the server the same night. The first test read as a failure:
+a message containing a known-bad link came back `dangerous` with
+`severity_floored_by: null`, which looked like the rule had not fired.
+
+Working it backwards was the useful part. The server turned out to be running
+an older commit, because 3.5 had been committed but not pushed — so the first
+round of testing was against code that did not contain the feature at all.
+After deploying properly, I confirmed the key reached the container, queried
+Google directly from the droplet to prove both the key and the test URL were
+good, and finally called `check_record` inside the running container, where it
+returned the rule correctly.
+
+So the signal had been working since the deploy. `severity_floored_by` was null
+because **a floor only reports itself when it actually raises the tier**, and
+the model had already scored those test messages `dangerous` on its own.
+Nothing left to raise, nothing to report. Not a defect — but it would have read
+as one in a demo, which is a good argument for rehearsing the demo rather than
+trusting the first green result.
+
+Two things to carry forward. A message that is already at the top tier hides
+the floor's effect entirely, so the demo needs a message the model rates low
+where the link is the only problem; `model_severity` beside `severity` then
+shows both honestly. And the test messages exposed a genuine false positive: a
+short, plainly legitimate message with a `cnu.edu` link scores `dangerous`. The
+body-length feature dominates when there is little text to weigh. That is
+exactly WBS 2.4, and I now have a concrete case to calibrate against rather
+than a hypothetical one.
 
 ## Notes
 

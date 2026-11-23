@@ -1,0 +1,16 @@
+# Nightly at 03:12 UTC. WBS 5.3.
+[Unit]
+Description=Run the PhishLens database backup nightly
+
+[Timer]
+# 03:12 rather than 03:00: every cron job on every host fires on the hour, and
+# the droplet is small enough that contention is real.
+OnCalendar=*-*-* 03:12:00
+# If the droplet was off or rebooting at 03:12, run the backup on the next boot
+# instead of silently skipping that night.
+Persistent=true
+RandomizedDelaySec=300
+Unit=phishlens-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,26 @@
+# PhishLens nightly database backup. WBS 5.3.
+# Install: sudo cp phishlens-backup.* /etc/systemd/system/
+#          sudo systemctl daemon-reload
+#          sudo systemctl enable --now phishlens-backup.timer
+[Unit]
+Description=PhishLens PostgreSQL backup
+# The dump runs `docker compose exec`, so the Docker daemon has to be up first.
+# Without this the first boot-time run fails against a socket that is not there.
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=phishlens
+Group=phishlens
+WorkingDirectory=/home/phishlens/PhishLens
+ExecStart=/home/phishlens/PhishLens/05_Deployment/backup/backup.sh
+# A dump of a 2 GB droplet's database should take seconds. Ten minutes means
+# something is wrong and the job should be killed rather than left running into
+# the next night's run.
+TimeoutStartSec=600
+Nice=10
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=multi-user.target

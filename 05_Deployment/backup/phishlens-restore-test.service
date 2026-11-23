@@ -1,0 +1,16 @@
+# Weekly restore verification. WBS 5.3.
+[Unit]
+Description=PhishLens backup restore verification
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=phishlens
+Group=phishlens
+WorkingDirectory=/home/phishlens/PhishLens
+ExecStart=/home/phishlens/PhishLens/05_Deployment/backup/restore_test.sh
+TimeoutStartSec=900
+
+[Install]
+WantedBy=multi-user.target

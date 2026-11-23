@@ -21,16 +21,15 @@ Usage
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
 import sys
 import tarfile
-import hashlib
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from record_schema import SCHEMA_VERSION, EmailRecord  # noqa: E402
@@ -110,6 +109,60 @@ def read_spamassassin(limit: int | None):
             yield raw, "spamassassin", group, f"spamassassin.tar.gz:{member.name}", label
 
 
+def read_personal_ham(limit: int | None):
+    """Stream legitimate mail out of a personal mbox export (WBS 1.6).
+
+    Why this reader exists
+    ----------------------
+    The legitimate half of the corpus was the 2002 SpamAssassin collection while
+    the phishing half is 2022+, and WBS 2.4 proved the model was exploiting that
+    twenty-year gap rather than detecting phishing. The clearest case is
+    `has_http_only_link`: 80% of the 2002 legitimate mail carries a plain http
+    link against 37% of the phishing, so the model learned "http link means
+    safe" - and modern mail, which is https throughout, is therefore scored as
+    unsafe. Rescoring the same 818 legitimate test messages with that one
+    feature flipped to https raises their caution rate from 11.9% to 59.2%.
+    Modern legitimate mail is the only thing that fixes that measurement.
+
+    Privacy
+    -------
+    The mbox is read from 01_Data/raw/, which is gitignored, and nothing derived
+    from it carries message content any further: the split files hold a record
+    id, a label and 43 numbers. The messages themselves never leave the machine
+    this runs on. See 00_Admin/data-handling.md.
+
+    Labelling
+    ---------
+    Everything here is labelled ham. That is an assumption, not a fact - it
+    holds only if the export excludes Spam and Trash, which is what the
+    instructions in CORPUS.md say to do. A phishing message that reached the
+    inbox and got exported would be mislabelled, and at this corpus size a
+    handful of those would matter, so the export is a filtered label rather than
+    "all mail".
+    """
+    path = Path(os.environ.get("PHISHLENS_HAM_MBOX") or RAW_DIR / "personal_ham.mbox")
+    if not path.exists():
+        return
+    count = 0
+    # Streamed by hand rather than via the mailbox module: mailbox.mbox builds
+    # an index of the whole file up front, which is slow and memory-hungry on a
+    # multi-gigabyte Takeout export.
+    buf: list[bytes] = []
+    with path.open("rb") as fh:
+        for line in fh:
+            if line.startswith(b"From ") and buf:
+                raw = b"".join(buf)
+                buf = [line]
+                if limit is not None and count >= limit:
+                    return
+                count += 1
+                yield raw, "personal", "inbox", f"{path.name}:{count}", "ham"
+                continue
+            buf.append(line)
+    if buf and (limit is None or count < limit):
+        yield b"".join(buf), "personal", "inbox", f"{path.name}:{count + 1}", "ham"
+
+
 def read_phishing_pot(limit: int | None):
     """Stream .eml messages out of raw/phishing_pot.tar.gz."""
     archive = RAW_DIR / "phishing_pot.tar.gz"
@@ -140,7 +193,7 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=None, help="max messages per corpus")
     parser.add_argument(
         "--only",
-        choices=("phishing_pot", "spamassassin"),
+        choices=("phishing_pot", "spamassassin", "personal_ham"),
         action="append",
         help="process just this corpus; repeatable. Use with --append to build the "
              "output across several runs on a machine with a short job limit.",
@@ -154,7 +207,11 @@ def main() -> int:
     args = parser.parse_args()
     selected = set(args.only) if args.only else {"phishing_pot", "spamassassin"}
 
-    archives = [RAW_DIR / "phishing_pot.tar.gz", RAW_DIR / "spamassassin.tar.gz"]
+    # personal_ham is opt-in: it is only present on a machine that has the
+    # author's own mail export, so a default run must not require it.
+    archives = [RAW_DIR / n for n in ("phishing_pot.tar.gz", "spamassassin.tar.gz")
+                if n.split(".")[0].replace("_tar", "") in
+                {"phishing_pot", "spamassassin"} & selected]
     missing = [a.name for a in archives if not a.exists()]
     if missing:
         print(f"missing in {RAW_DIR}: {', '.join(missing)} - run acquire_corpus.py first.",
@@ -193,6 +250,8 @@ def main() -> int:
             readers.append(read_phishing_pot(args.limit))
         if "spamassassin" in selected:
             readers.append(read_spamassassin(args.limit))
+        if "personal_ham" in selected:
+            readers.append(read_personal_ham(args.limit))
         for reader in readers:
             for raw, source, group, path, label in reader:
                 stats["read"][label] += 1
@@ -241,7 +300,7 @@ def main() -> int:
     )
 
     report = {
-        "generated_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generated_utc": datetime.now(UTC).isoformat(timespec="seconds"),
         "schema_version": SCHEMA_VERSION,
         "corpora_processed": sorted(selected),
         "messages_read": counts_now["messages_read"],
