@@ -102,7 +102,8 @@ done
 # 4. The restored database can actually answer the query the dashboard runs:
 #    a join across scans and indicators. Tables existing is not the same as the
 #    application working against them.
-JOINED=$(psql_scratch "SELECT count(*) FROM scans s LEFT JOIN indicators i ON i.scan_id = s.id;")
+JOINED=$(psql_scratch "SELECT count(*) FROM scans s LEFT JOIN indicators i ON i.scan_id = s.scan_id;")
+[[ "$JOINED" =~ ^[0-9]+$ ]] || fail "the scans x indicators join did not return a count"
 echo "  scans x indicators join returned $JOINED rows"
 
 echo

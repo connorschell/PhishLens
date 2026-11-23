@@ -4,13 +4,13 @@ PhishLens · CYBR 498W · Connor Schell
 
 ## Hours
 
-6.5 hours this week, estimated after the fact rather than tracked live.
-Running total 102.25 of 150 planned.
+7.0 hours this week, estimated after the fact rather than tracked live.
+Running total 102.75 of 150 planned.
 
 | Task | Hours | What was done |
 |---|---|---|
 | 1.6 | 2.0 | Personal-mail reader in `normalize.py`; corpus ethics and limitations written up in `CORPUS.md` |
-| 5.3 | 2.0 | Backup script, restore verification, systemd timer units, runbook |
+| 5.3 | 2.5 | Backup script, restore verification, systemd timer units, runbook; installed and verified on the droplet |
 | 5.4 | 1.5 | End-to-end test plan — 31 cases across six groups |
 | A-12 | 1.0 | Weekly Update #9 and this entry |
 
@@ -46,6 +46,25 @@ timer, after the Sunday dump.
 `pg_restore --exit-on-error` is deliberate throughout. A restore that logs errors
 and continues produces a database that is partly right, which is the worst thing
 to discover during an actual recovery.
+
+**Installed and verified on the droplet, and that is where it earned its keep.**
+The first run failed: `pg_restore` reported no magic string in the file header.
+The dump was intact — `head -c 48` showed a correct `PGDMP` header — so the
+fault was in the verification, not the backup. Both scripts had piped the file
+to `pg_restore` through `docker compose exec -T`, which hands the process a
+non-seekable stdin that cannot be read as a custom-format archive. They now
+copy the dump into the container and restore from a real path.
+
+The second run exposed a second defect, this one in the join check: `scans.id`
+does not exist, the key is `scan_id`. Because the script runs under `set -e`
+the run aborted rather than printing an empty count and continuing to a pass.
+The third run was clean — six tables present, five foreign keys, exact row
+parity across every table (installs 8, model_versions 1, scans 143, indicators
+283, url_reputation 9, feedback 4), 313 rows on the join, RESTORE TEST PASSED.
+
+The verification was wrong twice before it was right once, which is the whole
+argument for running it rather than shipping it. A script that printed PASSED
+on its first run would have been believed and would have been worth nothing.
 
 Three limitations are written into the runbook rather than left implied. The
 backups live on the droplet they protect, so they cover a bad migration or a
@@ -112,8 +131,8 @@ critical path, not housekeeping.
 ## Position
 
 Week 9 was planned as 22 hours across four tasks and did not land as planned.
-5.3 and 5.4 are written but neither has been executed against the droplet. 1.6 is
-groundwork only. 2.4 has not started and cannot until 1.6 does.
+5.3 is complete — written, installed and verified. 5.4 is written but not yet
+executed. 1.6 is groundwork only. 2.4 has not started and cannot until 1.6 does.
 
 What is genuinely done this semester: the full pipeline from corpus to extension
 panel, deployed over HTTPS, with Safe Browsing, an operator dashboard, and a
