@@ -64,6 +64,14 @@ Three things in the script exist because of specific failure modes:
   so every stored file has been opened at least once by something that
   understands the format.
 
+Both scripts copy the dump into the container with `docker compose cp` rather
+than piping it to `pg_restore` on stdin. The first real run on the droplet
+(11/22) failed with `did not find magic string in file header` on a dump whose
+first bytes were a correct `PGDMP` header: `docker compose exec -T` gives the
+process a non-seekable stdin, which `pg_restore` cannot read a custom-format
+archive from. The dump was never the problem, and a verification step that
+fails on good backups is worse than none — it teaches you to ignore it.
+
 Retention is 7 daily and 4 weekly (Sunday runs are tagged weekly), so roughly a
 month of history in a few megabytes.
 

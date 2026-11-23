@@ -83,10 +83,23 @@ fi
 # Integrity check: pg_restore --list reads the archive's table of contents and
 # fails on a corrupt file. Cheap, and it means every stored dump has been opened
 # at least once.
-if ! docker compose exec -T db pg_restore --list /dev/stdin < "$OUT" > /dev/null 2>&1; then
+#
+# The dump is copied into the container rather than piped to pg_restore's stdin.
+# Piping looked fine and was not: `docker compose exec -T` gives the process a
+# non-seekable stdin, and pg_restore reading a custom-format archive that way
+# fails with "did not find magic string in file header" on a perfectly good
+# file. Found on the first real run, 11/22.
+CTMP="/tmp/phishlens_verify_$$.dump"
+if ! docker compose cp "$OUT" "db:$CTMP" > /dev/null 2>&1; then
+  log "WARNING: could not copy $OUT into the db container for verification"
+  exit 3
+fi
+if ! docker compose exec -T db pg_restore --list "$CTMP" > /dev/null 2>&1; then
+  docker compose exec -T db rm -f "$CTMP" > /dev/null 2>&1 || true
   log "WARNING: pg_restore could not read the table of contents of $OUT"
   exit 3
 fi
+docker compose exec -T db rm -f "$CTMP" > /dev/null 2>&1 || true
 log "table of contents verified"
 
 # Retention: keep the newest N of each tag. Sorted by name, which is safe

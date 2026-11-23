@@ -39,6 +39,7 @@ cleanup() {
   docker compose exec -T -e PGPASSWORD="$POSTGRES_PASSWORD" db \
     psql --username="$POSTGRES_USER" --dbname=postgres -q \
     -c "DROP DATABASE IF EXISTS $SCRATCH_DB;" >/dev/null 2>&1 || true
+  [[ -n "${CTMP:-}" ]] && docker compose exec -T db rm -f "$CTMP" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -47,12 +48,21 @@ docker compose exec -T -e PGPASSWORD="$POSTGRES_PASSWORD" db \
   psql --username="$POSTGRES_USER" --dbname=postgres -q \
   -c "CREATE DATABASE $SCRATCH_DB;" || fail "could not create scratch database"
 
+# The dump is copied into the container rather than piped in on stdin.
+# `docker compose exec -T` hands the process a non-seekable stdin, and
+# pg_restore reading a custom-format archive that way fails with "did not find
+# magic string in file header" on a file that is completely intact. Found on
+# the first real run against the droplet, 11/22.
+CTMP="/tmp/phishlens_restore_$$.dump"
+docker compose cp "$DUMP" "db:$CTMP" > /dev/null \
+  || fail "could not copy the dump into the db container"
+
 # --exit-on-error: a restore that logs errors and continues produces a database
 # that is partly right, which is the worst outcome to discover during an actual
 # recovery. Better to fail here, now, on a scratch copy.
 docker compose exec -T -e PGPASSWORD="$POSTGRES_PASSWORD" db \
   pg_restore --username="$POSTGRES_USER" --dbname="$SCRATCH_DB" \
-             --no-owner --no-privileges --exit-on-error /dev/stdin < "$DUMP" \
+             --no-owner --no-privileges --exit-on-error "$CTMP" \
   || fail "pg_restore reported errors"
 
 echo
