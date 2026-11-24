@@ -46,3 +46,6 @@ docker-compose.override.yml
 .secrets/
 
 make-env.ps1
+
+# --- Local-only study material: not part of the submission, never committed ---
+_private/
