@@ -20,6 +20,12 @@ from .routes import dashboard, feedback, health, register, scan
 settings = get_settings()
 logging.basicConfig(level=settings.log_level)
 
+# httpx logs the full request URL at INFO, so any credential carried in a query
+# string ends up in the container logs verbatim. The Safe Browsing key now goes
+# in a header instead (services/safebrowsing.py), and this keeps the whole class
+# of leak out of the logs regardless of how a future call is written.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
 app = FastAPI(
     title="PhishLens API",
     description="Explainable phishing detection for the Gmail web client.",

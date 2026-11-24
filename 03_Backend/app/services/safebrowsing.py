@@ -160,8 +160,13 @@ def _query_api(urls: list[str]) -> dict[str, tuple[str, int]] | None:
         },
     }
     try:
+        # The key travels as a header, not a query parameter. As ?key=... it
+        # appeared in full in every httpx INFO log line, and would equally reach
+        # any proxy log or traceback that records a URL. Found during the WBS 2.4
+        # deployment verification on 2026-11-24; see the Change Log.
         with httpx.Client(timeout=settings.safe_browsing_timeout_s) as client:
-            r = client.post(_ENDPOINT, params={"key": settings.safe_browsing_api_key},
+            r = client.post(_ENDPOINT,
+                            headers={"X-Goog-Api-Key": settings.safe_browsing_api_key},
                             json=body)
         if r.status_code != 200:
             log.warning("safe browsing lookup returned %s; signal skipped", r.status_code)
